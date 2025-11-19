@@ -43,7 +43,7 @@ struct ContentView: View {
                     .padding(.top, 20)
                 }
             }
-            .navigationTitle(viewModel.presentationOutline == nil ? "Create New Presentation" : "Presentation")
+            .navigationTitle(viewModel.presentationOutline == nil ? "" : "Presentation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
