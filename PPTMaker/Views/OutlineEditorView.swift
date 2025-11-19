@@ -10,11 +10,29 @@ import SwiftUI
 struct OutlineEditorView: View {
     @ObservedObject var viewModel: PresentationViewModel
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 18/255, green: 18/255, blue: 24/255)
+                backgroundColor
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -24,14 +42,14 @@ struct OutlineEditorView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Presentation Title")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(Color.white.opacity(0.6))
+                                    .foregroundColor(secondaryTextColor)
 
                                 Text(outline.presentationTitle)
                                     .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(textColor)
                                     .padding()
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                                    .background(cardColor)
                                     .cornerRadius(12)
                             }
 
@@ -39,7 +57,7 @@ struct OutlineEditorView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Slides (\(outline.slides.count))")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(Color.white.opacity(0.6))
+                                    .foregroundColor(secondaryTextColor)
 
                                 ForEach(Array(outline.slides.enumerated()), id: \.element.id) { index, slide in
                                     NavigationLink {
@@ -55,7 +73,7 @@ struct OutlineEditorView: View {
                                                 HStack(spacing: 8) {
                                                     Text("Slide \(slide.slideNumber)")
                                                         .font(.system(size: 12, weight: .medium))
-                                                        .foregroundColor(Color.white.opacity(0.5))
+                                                        .foregroundColor(secondaryTextColor)
 
                                                     if slide.isTitleSlide {
                                                         Text("TITLE")
@@ -70,20 +88,20 @@ struct OutlineEditorView: View {
 
                                                 Text(slide.title)
                                                     .font(.system(size: 15, weight: .medium))
-                                                    .foregroundColor(.white)
+                                                    .foregroundColor(textColor)
                                                     .lineLimit(1)
 
                                                 if let subtitle = slide.subtitle, !subtitle.isEmpty {
                                                     Text(subtitle)
                                                         .font(.system(size: 13))
-                                                        .foregroundColor(Color.white.opacity(0.6))
+                                                        .foregroundColor(secondaryTextColor)
                                                         .lineLimit(1)
                                                 }
 
                                                 if let bullets = slide.bulletPoints, !bullets.isEmpty {
                                                     Text("\(bullets.count) bullet points")
                                                         .font(.system(size: 12))
-                                                        .foregroundColor(Color.white.opacity(0.5))
+                                                        .foregroundColor(secondaryTextColor)
                                                 }
                                             }
 
@@ -91,10 +109,10 @@ struct OutlineEditorView: View {
 
                                             Image(systemName: "chevron.right")
                                                 .font(.system(size: 14))
-                                                .foregroundColor(Color.white.opacity(0.4))
+                                                .foregroundColor(secondaryTextColor.opacity(0.6))
                                         }
                                         .padding()
-                                        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                                        .background(cardColor)
                                         .cornerRadius(12)
                                     }
                                 }
@@ -106,15 +124,15 @@ struct OutlineEditorView: View {
             }
             .navigationTitle("Edit Outline")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+            .toolbarBackground(backgroundColor, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -125,6 +143,7 @@ struct OutlineEditorView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .preferredColorScheme(isDarkMode ? .dark : .light)
         }
     }
 
@@ -140,6 +159,24 @@ struct SlideEditorView: View {
     @State private var slide: SlideData
     let onSave: (SlideData) -> Void
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     init(slide: SlideData, onSave: @escaping (SlideData) -> Void) {
         _slide = State(initialValue: slide)
@@ -148,7 +185,7 @@ struct SlideEditorView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 18/255, green: 18/255, blue: 24/255)
+            backgroundColor
                 .ignoresSafeArea()
 
             ScrollView {
@@ -157,13 +194,13 @@ struct SlideEditorView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Slide Title")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
 
-                        TextField("", text: $slide.title, prompt: Text("Enter slide title").foregroundColor(Color.white.opacity(0.4)))
+                        TextField("", text: $slide.title, prompt: Text("Enter slide title").foregroundColor(secondaryTextColor.opacity(0.6)))
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
                             .padding()
-                            .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                            .background(cardColor)
                             .cornerRadius(12)
                     }
 
@@ -172,16 +209,16 @@ struct SlideEditorView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Subtitle")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.white.opacity(0.6))
+                                .foregroundColor(secondaryTextColor)
 
                             TextField("", text: Binding(
                                 get: { slide.subtitle ?? "" },
                                 set: { slide.subtitle = $0.isEmpty ? nil : $0 }
-                            ), prompt: Text("Enter subtitle").foregroundColor(Color.white.opacity(0.4)))
+                            ), prompt: Text("Enter subtitle").foregroundColor(secondaryTextColor.opacity(0.6)))
                                 .font(.system(size: 16))
-                                .foregroundColor(.white)
+                                .foregroundColor(textColor)
                                 .padding()
-                                .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                                .background(cardColor)
                                 .cornerRadius(12)
                         }
                     } else {
@@ -189,13 +226,13 @@ struct SlideEditorView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Bullet Points")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(Color.white.opacity(0.6))
+                                .foregroundColor(secondaryTextColor)
 
                             ForEach(Array((slide.bulletPoints ?? []).enumerated()), id: \.offset) { index, bullet in
                                 HStack(alignment: .top, spacing: 8) {
                                     Text("•")
                                         .font(.system(size: 16))
-                                        .foregroundColor(Color.white.opacity(0.6))
+                                        .foregroundColor(secondaryTextColor)
                                         .padding(.top, 12)
 
                                     TextField("", text: Binding(
@@ -205,11 +242,11 @@ struct SlideEditorView: View {
                                                 slide.bulletPoints![index] = newValue
                                             }
                                         }
-                                    ), prompt: Text("Bullet point").foregroundColor(Color.white.opacity(0.4)))
+                                    ), prompt: Text("Bullet point").foregroundColor(secondaryTextColor.opacity(0.6)))
                                         .font(.system(size: 16))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(textColor)
                                         .padding()
-                                        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                                        .background(cardColor)
                                         .cornerRadius(12)
                                 }
                             }
@@ -240,8 +277,8 @@ struct SlideEditorView: View {
         }
         .navigationTitle("Edit Slide \(slide.slideNumber)")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+        .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+        .toolbarBackground(backgroundColor, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -253,5 +290,6 @@ struct SlideEditorView: View {
                 .fontWeight(.semibold)
             }
         }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 }

@@ -14,12 +14,30 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
     @State private var previewURL: URL?
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
-                // Dark background
-                Color(red: 18/255, green: 18/255, blue: 24/255)
+                // Dynamic background
+                backgroundColor
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -43,22 +61,35 @@ struct ContentView: View {
                     .padding(.top, 20)
                 }
             }
-            .navigationTitle(viewModel.presentationOutline == nil ? "" : "Presentation")
+            .navigationTitle("PPT Maker")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+            .toolbarBackground(backgroundColor, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        HapticManager.shared.selection()
+                        withAnimation {
+                            isDarkMode.toggle()
+                        }
+                    } label: {
+                        Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                            .foregroundColor(isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255))
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         HapticManager.shared.lightTap()
                         showHistory = true
                     } label: {
                         Image(systemName: "clock.arrow.circlepath")
-                            .foregroundColor(.white)
+                            .foregroundColor(isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255))
                     }
                 }
             }
+            .preferredColorScheme(isDarkMode ? .dark : .light)
             .sheet(isPresented: $viewModel.showOutlineEditor) {
                 OutlineEditorView(viewModel: viewModel)
             }
@@ -69,7 +100,7 @@ struct ContentView: View {
                 ShareSheet(items: [url])
             }
             .sheet(isPresented: $showHistory) {
-                PresentationHistoryView()
+                PresentationHistoryView(viewModel: viewModel)
             }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
@@ -144,11 +175,11 @@ struct ContentView: View {
             VStack(spacing: 4) {
                 Text("PPT Maker")
                     .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
 
                 Text("AI-Powered Presentations")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(Color.white.opacity(0.6))
+                    .foregroundColor(secondaryTextColor)
             }
         }
         .frame(maxWidth: .infinity)
@@ -163,13 +194,13 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Presentation Topic")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
 
-                TextField("", text: $viewModel.topic, prompt: Text("e.g., 'The Future of Renewable Energy'").foregroundColor(Color.white.opacity(0.4)))
+                TextField("", text: $viewModel.topic, prompt: Text("e.g., 'The Future of Renewable Energy'").foregroundColor(secondaryTextColor.opacity(0.6)))
                     .font(.system(size: 16))
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .padding()
-                    .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                    .background(cardColor)
                     .cornerRadius(12)
                     .disabled(viewModel.isGeneratingOutline)
             }
@@ -179,19 +210,19 @@ struct ContentView: View {
                 HStack {
                     Text("Number of Slides")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(textColor)
 
                     Spacer()
 
                     Text("\(viewModel.numSlides)")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(textColor)
                 }
 
                 HStack(spacing: 12) {
                     Text("5")
                         .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(secondaryTextColor)
 
                     Slider(value: Binding(
                         get: { Double(viewModel.numSlides) },
@@ -202,7 +233,7 @@ struct ContentView: View {
 
                     Text("15")
                         .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(secondaryTextColor)
                 }
             }
 
@@ -244,21 +275,21 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Review Outline")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
 
             if let outline = viewModel.presentationOutline {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(outline.presentationTitle)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(textColor)
 
                     Text("\(outline.slides.count) slides")
                         .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(secondaryTextColor)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                .background(cardColor)
                 .cornerRadius(12)
 
                 Button {
@@ -286,7 +317,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Choose Template")
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
 
             Button {
                 HapticManager.shared.selection()
@@ -310,11 +341,11 @@ struct ContentView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(viewModel.selectedTemplate.name)
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
                             .font(.system(size: 15, weight: .medium))
 
                         Text(viewModel.selectedTemplate.description)
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
                             .font(.system(size: 13))
                             .lineLimit(1)
                     }
@@ -322,11 +353,11 @@ struct ContentView: View {
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .foregroundColor(Color.white.opacity(0.4))
+                        .foregroundColor(secondaryTextColor.opacity(0.6))
                         .font(.system(size: 14))
                 }
                 .padding()
-                .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                .background(cardColor)
                 .cornerRadius(12)
             }
         }

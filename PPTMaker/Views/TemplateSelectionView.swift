@@ -10,11 +10,29 @@ import SwiftUI
 struct TemplateSelectionView: View {
     @Binding var selectedTemplate: Template
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 18/255, green: 18/255, blue: 24/255)
+                backgroundColor
                     .ignoresSafeArea()
 
                 ScrollView {
@@ -22,7 +40,10 @@ struct TemplateSelectionView: View {
                         ForEach(Template.templates) { template in
                             TemplatePreviewCard(
                                 template: template,
-                                isSelected: selectedTemplate.id == template.id
+                                isSelected: selectedTemplate.id == template.id,
+                                cardColor: cardColor,
+                                textColor: textColor,
+                                secondaryTextColor: secondaryTextColor
                             )
                             .onTapGesture {
                                 HapticManager.shared.selection()
@@ -36,8 +57,8 @@ struct TemplateSelectionView: View {
             }
             .navigationTitle("Choose Template")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+            .toolbarBackground(backgroundColor, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -48,6 +69,7 @@ struct TemplateSelectionView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .preferredColorScheme(isDarkMode ? .dark : .light)
         }
     }
 }
@@ -56,6 +78,9 @@ struct TemplateSelectionView: View {
 struct TemplatePreviewCard: View {
     let template: Template
     let isSelected: Bool
+    let cardColor: Color
+    let textColor: Color
+    let secondaryTextColor: Color
 
     var body: some View {
         VStack(spacing: 0) {
@@ -70,11 +95,11 @@ struct TemplatePreviewCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(template.name)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
 
                         Text(template.description)
                             .font(.system(size: 13))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
                             .lineLimit(2)
                     }
 
@@ -90,7 +115,7 @@ struct TemplatePreviewCard: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+        .background(cardColor)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

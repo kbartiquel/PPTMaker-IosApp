@@ -40,10 +40,12 @@ struct OutlineMetadata: Codable {
 struct PresentationOutline: Codable {
     let presentationTitle: String
     var slides: [SlideData]
+    var template: String?  // Template name used for this presentation
 
     enum CodingKeys: String, CodingKey {
         case presentationTitle = "presentation_title"
         case slides
+        case template
     }
 }
 

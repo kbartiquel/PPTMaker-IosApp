@@ -8,17 +8,39 @@
 import SwiftUI
 
 struct PresentationHistoryView: View {
+    @ObservedObject var viewModel: PresentationViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var savedPresentations: [URL] = []
+    @State private var presentationsWithOutlines: Set<URL> = []
     @State private var selectedPresentation: URL?
     @State private var showDeleteAlert = false
     @State private var presentationToDelete: URL?
+    @AppStorage("isDarkMode") private var isDarkMode = true
 
     private let fileService = FileService()
+    private let apiService = APIService()
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 18/255, green: 18/255, blue: 24/255)
+                backgroundColor
                     .ignoresSafeArea()
 
                 Group {
@@ -31,8 +53,8 @@ struct PresentationHistoryView: View {
             }
             .navigationTitle("My Presentations")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+            .toolbarBackground(backgroundColor, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -40,10 +62,11 @@ struct PresentationHistoryView: View {
                         refreshList()
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .foregroundColor(.white)
+                            .foregroundColor(textColor)
                     }
                 }
             }
+            .preferredColorScheme(isDarkMode ? .dark : .light)
             .onAppear {
                 refreshList()
             }
@@ -68,15 +91,15 @@ struct PresentationHistoryView: View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 64))
-                .foregroundColor(Color.white.opacity(0.4))
+                .foregroundColor(secondaryTextColor.opacity(0.6))
 
             Text("No Presentations Yet")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
 
             Text("Create your first presentation to see it here")
                 .font(.system(size: 15))
-                .foregroundColor(Color.white.opacity(0.6))
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -84,38 +107,61 @@ struct PresentationHistoryView: View {
 
     // MARK: - Presentation List
     private var presentationListView: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                ForEach(savedPresentations, id: \.self) { url in
-                    PresentationRow(url: url)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            HapticManager.shared.impact(style: .light)
-                            selectedPresentation = url
+        List {
+            ForEach(savedPresentations, id: \.self) { url in
+                PresentationRow(
+                    url: url,
+                    cardColor: cardColor,
+                    textColor: textColor,
+                    secondaryTextColor: secondaryTextColor
+                )
+                .listRowBackground(backgroundColor)
+                .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    HapticManager.shared.impact(style: .light)
+                    selectedPresentation = url
+                }
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    // Only show Edit & Regenerate if outline JSON exists
+                    if presentationsWithOutlines.contains(url) {
+                        Button {
+                            editAndRegenerate(url)
+                        } label: {
+                            Label("Edit & Regenerate", systemImage: "pencil.circle")
                         }
-                        .contextMenu {
-                            Button {
-                                sharePresentation(url)
-                            } label: {
-                                Label("Share", systemImage: "square.and.arrow.up")
-                            }
+                        .tint(.blue)
+                    }
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        presentationToDelete = url
+                        showDeleteAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
 
-                            Button(role: .destructive) {
-                                presentationToDelete = url
-                                showDeleteAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
+                    Button {
+                        sharePresentation(url)
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .tint(.blue)
                 }
             }
-            .padding(20)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 
     // MARK: - Actions
     private func refreshList() {
         savedPresentations = fileService.listSavedPresentations()
+
+        // Check which presentations have outlines
+        presentationsWithOutlines = Set(savedPresentations.filter { url in
+            fileService.loadOutline(for: url) != nil
+        })
     }
 
     private func deletePresentation(_ url: URL) {
@@ -129,6 +175,12 @@ struct PresentationHistoryView: View {
         }
     }
 
+    private func editAndRegenerate(_ url: URL) {
+        HapticManager.shared.impact(style: .medium)
+        viewModel.loadOutlineFromHistory(pptxURL: url)
+        dismiss()
+    }
+
     private func sharePresentation(_ url: URL) {
         HapticManager.shared.impact(style: .medium)
         // Share via system share sheet
@@ -136,6 +188,16 @@ struct PresentationHistoryView: View {
             activityItems: [url],
             applicationActivities: nil
         )
+
+        // Configure for iPad
+        if let popoverController = activityVC.popoverPresentationController {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                popoverController.sourceView = window
+                popoverController.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
+                popoverController.permittedArrowDirections = []
+            }
+        }
 
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
@@ -147,6 +209,9 @@ struct PresentationHistoryView: View {
 // MARK: - Presentation Row
 struct PresentationRow: View {
     let url: URL
+    let cardColor: Color
+    let textColor: Color
+    let secondaryTextColor: Color
     @State private var fileDate: Date?
     @State private var fileSize: String?
 
@@ -164,22 +229,22 @@ struct PresentationRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(url.deletingPathExtension().lastPathComponent)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(textColor)
                     .lineLimit(2)
 
                 HStack(spacing: 6) {
                     if let date = fileDate {
                         Text(date, style: .date)
                             .font(.system(size: 12))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
                     }
 
                     if let size = fileSize {
                         Text("•")
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
                         Text(size)
                             .font(.system(size: 12))
-                            .foregroundColor(Color.white.opacity(0.6))
+                            .foregroundColor(secondaryTextColor)
                     }
                 }
             }
@@ -188,10 +253,10 @@ struct PresentationRow: View {
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
-                .foregroundColor(Color.white.opacity(0.4))
+                .foregroundColor(secondaryTextColor.opacity(0.6))
         }
         .padding(16)
-        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+        .background(cardColor)
         .cornerRadius(12)
         .onAppear {
             loadFileInfo()
@@ -215,7 +280,40 @@ struct PresentationRow: View {
 // MARK: - Quick Look Preview
 import QuickLook
 
-struct QuickLookPreview: UIViewControllerRepresentable {
+struct QuickLookPreview: View {
+    let url: URL
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    var body: some View {
+        NavigationView {
+            QuickLookPreviewController(url: url)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Close") {
+                            dismiss()
+                        }
+                        .foregroundColor(textColor)
+                        .fontWeight(.semibold)
+                    }
+                }
+                .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+                .toolbarBackground(backgroundColor, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+        }
+    }
+}
+
+struct QuickLookPreviewController: UIViewControllerRepresentable {
     let url: URL
 
     func makeUIViewController(context: Context) -> QLPreviewController {

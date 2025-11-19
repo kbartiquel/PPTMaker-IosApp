@@ -10,6 +10,24 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var isPresented: Bool
     @State private var currentPage = 0
+    @AppStorage("isDarkMode") private var isDarkMode = true
+
+    // Dynamic colors based on theme
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.7) : Color.gray
+    }
 
     let pages: [OnboardingPage] = [
         OnboardingPage(
@@ -44,16 +62,21 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            // Dark background
-            Color(red: 18/255, green: 18/255, blue: 24/255)
+            // Dynamic background
+            backgroundColor
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Page Content
                 TabView(selection: $currentPage) {
                     ForEach(0..<pages.count, id: \.self) { index in
-                        OnboardingPageView(page: pages[index])
-                            .tag(index)
+                        OnboardingPageView(
+                            page: pages[index],
+                            textColor: textColor,
+                            secondaryTextColor: secondaryTextColor,
+                            cardColor: cardColor
+                        )
+                        .tag(index)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
@@ -65,7 +88,7 @@ struct OnboardingView: View {
                     .padding(.bottom, 32)
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 
     private var bottomButton: some View {
@@ -81,7 +104,7 @@ struct OnboardingView: View {
         } label: {
             Text(currentPage < pages.count - 1 ? "Next" : "Get Started")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(isDarkMode ? .white : .white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(Color(red: 59/255, green: 130/255, blue: 246/255))
@@ -108,6 +131,9 @@ struct OnboardingPage {
 // MARK: - Onboarding Page View
 struct OnboardingPageView: View {
     let page: OnboardingPage
+    let textColor: Color
+    let secondaryTextColor: Color
+    let cardColor: Color
 
     var body: some View {
         VStack(spacing: 32) {
@@ -128,14 +154,14 @@ struct OnboardingPageView: View {
             // Title
             Text(page.title)
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(textColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
             // Description
             Text(page.description)
                 .font(.system(size: 16))
-                .foregroundColor(Color.white.opacity(0.7))
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .padding(.horizontal, 40)
@@ -145,7 +171,7 @@ struct OnboardingPageView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Try these topics:")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Color.white.opacity(0.6))
+                        .foregroundColor(secondaryTextColor)
                         .padding(.leading, 4)
 
                     ForEach(topics, id: \.self) { topic in
@@ -156,12 +182,12 @@ struct OnboardingPageView: View {
 
                             Text(topic)
                                 .font(.system(size: 15))
-                                .foregroundColor(.white)
+                                .foregroundColor(textColor)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+                        .background(cardColor)
                         .cornerRadius(10)
                     }
                 }

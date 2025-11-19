@@ -124,6 +124,11 @@ class PresentationViewModel: ObservableObject {
             let filename = fileService.generateFilename(from: outline.presentationTitle)
             let fileURL = try fileService.savePresentation(data, filename: filename)
 
+            // Save outline JSON for later editing (with template info)
+            var outlineWithTemplate = outline
+            outlineWithTemplate.template = selectedTemplate.id
+            try fileService.saveOutline(outlineWithTemplate, for: fileURL)
+
             generatedFileURL = fileURL
             showSuccess = true
 
@@ -132,6 +137,17 @@ class PresentationViewModel: ObservableObject {
         }
 
         isGeneratingPresentation = false
+    }
+
+    // MARK: - Load Outline from History
+    func loadOutlineFromHistory(pptxURL: URL) {
+        if let outline = fileService.loadOutline(for: pptxURL) {
+            presentationOutline = outline
+            topic = "" // Clear topic since we're editing existing
+            showOutlineEditor = true
+        } else {
+            errorMessage = "Could not load outline data for this presentation"
+        }
     }
 
     // MARK: - Reset State

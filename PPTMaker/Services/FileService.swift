@@ -52,6 +52,8 @@ class FileService {
     // MARK: - Delete Presentation
     func deletePresentation(at url: URL) throws {
         try FileManager.default.removeItem(at: url)
+        // Also delete the outline JSON if it exists
+        try? deleteOutline(for: url)
     }
 
     // MARK: - Generate Filename
@@ -66,5 +68,41 @@ class FileService {
         let filename = truncated.isEmpty ? "Presentation" : truncated
 
         return "\(filename).pptx"
+    }
+
+    // MARK: - Save Outline JSON
+    func saveOutline(_ outline: PresentationOutline, for pptxURL: URL) throws {
+        let jsonURL = pptxURL.deletingPathExtension().appendingPathExtension("json")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let jsonData = try encoder.encode(outline)
+        try jsonData.write(to: jsonURL)
+    }
+
+    // MARK: - Load Outline JSON
+    func loadOutline(for pptxURL: URL) -> PresentationOutline? {
+        let jsonURL = pptxURL.deletingPathExtension().appendingPathExtension("json")
+
+        guard FileManager.default.fileExists(atPath: jsonURL.path) else {
+            return nil
+        }
+
+        do {
+            let jsonData = try Data(contentsOf: jsonURL)
+            let decoder = JSONDecoder()
+            let outline = try decoder.decode(PresentationOutline.self, from: jsonData)
+            return outline
+        } catch {
+            print("Error loading outline: \(error)")
+            return nil
+        }
+    }
+
+    // MARK: - Delete Outline JSON
+    func deleteOutline(for pptxURL: URL) throws {
+        let jsonURL = pptxURL.deletingPathExtension().appendingPathExtension("json")
+        if FileManager.default.fileExists(atPath: jsonURL.path) {
+            try FileManager.default.removeItem(at: jsonURL)
+        }
     }
 }
