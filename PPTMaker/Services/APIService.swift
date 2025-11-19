@@ -1,0 +1,131 @@
+//
+//  APIService.swift
+//  PPTMaker
+//
+//  Service for communicating with the backend API
+//
+
+import Foundation
+
+enum APIError: LocalizedError {
+    case invalidURL
+    case networkError(Error)
+    case serverError(String)
+    case invalidResponse
+    case decodingError(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid server URL"
+        case .networkError(let error):
+            return "Network error: \(error.localizedDescription)"
+        case .serverError(let message):
+            return "Server error: \(message)"
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .decodingError(let error):
+            return "Failed to decode response: \(error.localizedDescription)"
+        }
+    }
+}
+
+class APIService {
+    // Change this to your production URL when deployed
+    #if DEBUG
+    static let baseURL = "http://localhost:8000"
+    #else
+    static let baseURL = "https://your-render-app.onrender.com"
+    #endif
+
+    // MARK: - Step 1: Generate Outline
+    func generateOutline(topic: String, numSlides: Int) async throws -> PresentationOutline {
+        guard let url = URL(string: "\(APIService.baseURL)/generate-outline") else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let requestBody = OutlineRequest(topic: topic, numSlides: numSlides)
+        request.httpBody = try JSONEncoder().encode(requestBody)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+
+            if httpResponse.statusCode == 200 {
+                let outlineResponse = try JSONDecoder().decode(OutlineResponse.self, from: data)
+                return outlineResponse.outline
+            } else {
+                // Try to parse error message
+                if let errorDict = try? JSONDecoder().decode([String: String].self, from: data),
+                   let detail = errorDict["detail"] {
+                    throw APIError.serverError(detail)
+                }
+                throw APIError.serverError("HTTP \(httpResponse.statusCode)")
+            }
+        } catch let error as APIError {
+            throw error
+        } catch let error as DecodingError {
+            throw APIError.decodingError(error)
+        } catch {
+            throw APIError.networkError(error)
+        }
+    }
+
+    // MARK: - Step 2: Generate Presentation
+    func generatePresentation(
+        presentationTitle: String,
+        slides: [SlideData],
+        template: String
+    ) async throws -> Data {
+        guard let url = URL(string: "\(APIService.baseURL)/generate-presentation") else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let requestBody = PresentationRequest(
+            presentationTitle: presentationTitle,
+            slides: slides,
+            template: template
+        )
+        request.httpBody = try JSONEncoder().encode(requestBody)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+
+            if httpResponse.statusCode == 200 {
+                return data
+            } else {
+                // Try to parse error message
+                if let errorDict = try? JSONDecoder().decode([String: String].self, from: data),
+                   let detail = errorDict["detail"] {
+                    throw APIError.serverError(detail)
+                }
+                throw APIError.serverError("HTTP \(httpResponse.statusCode)")
+            }
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.networkError(error)
+        }
+    }
+
+    // MARK: - Get Templates
+    func getTemplates() async throws -> [Template] {
+        // Return static templates (they match the backend)
+        return Template.templates
+    }
+}
