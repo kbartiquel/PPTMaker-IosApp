@@ -17,20 +17,30 @@ struct PresentationHistoryView: View {
 
     var body: some View {
         NavigationView {
-            Group {
-                if savedPresentations.isEmpty {
-                    emptyStateView
-                } else {
-                    presentationListView
+            ZStack {
+                Color(red: 18/255, green: 18/255, blue: 24/255)
+                    .ignoresSafeArea()
+
+                Group {
+                    if savedPresentations.isEmpty {
+                        emptyStateView
+                    } else {
+                        presentationListView
+                    }
                 }
             }
             .navigationTitle("My Presentations")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(Color(red: 18/255, green: 18/255, blue: 24/255), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         refreshList()
                     } label: {
                         Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.white)
                     }
                 }
             }
@@ -58,15 +68,15 @@ struct PresentationHistoryView: View {
         VStack(spacing: 20) {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 64))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.white.opacity(0.4))
 
             Text("No Presentations Yet")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white)
 
             Text("Create your first presentation to see it here")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(.system(size: 15))
+                .foregroundColor(Color.white.opacity(0.6))
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -74,30 +84,32 @@ struct PresentationHistoryView: View {
 
     // MARK: - Presentation List
     private var presentationListView: some View {
-        List {
-            ForEach(savedPresentations, id: \.self) { url in
-                PresentationRow(url: url)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        HapticManager.shared.impact(style: .light)
-                        selectedPresentation = url
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            presentationToDelete = url
-                            showDeleteAlert = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(savedPresentations, id: \.self) { url in
+                    PresentationRow(url: url)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            HapticManager.shared.impact(style: .light)
+                            selectedPresentation = url
                         }
+                        .contextMenu {
+                            Button {
+                                sharePresentation(url)
+                            } label: {
+                                Label("Share", systemImage: "square.and.arrow.up")
+                            }
 
-                        Button {
-                            sharePresentation(url)
-                        } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
+                            Button(role: .destructive) {
+                                presentationToDelete = url
+                                showDeleteAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
-                        .tint(.blue)
-                    }
+                }
             }
+            .padding(20)
         }
     }
 
@@ -142,32 +154,32 @@ struct PresentationRow: View {
         HStack(spacing: 12) {
             // Icon
             Image(systemName: "doc.richtext.fill")
-                .font(.title2)
-                .foregroundColor(.blue)
-                .frame(width: 44, height: 44)
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
+                .font(.system(size: 24))
+                .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                .frame(width: 50, height: 50)
+                .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.15))
+                .cornerRadius(10)
 
             // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(url.deletingPathExtension().lastPathComponent)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white)
                     .lineLimit(2)
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     if let date = fileDate {
                         Text(date, style: .date)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.white.opacity(0.6))
                     }
 
                     if let size = fileSize {
                         Text("•")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.white.opacity(0.6))
                         Text(size)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.white.opacity(0.6))
                     }
                 }
             }
@@ -175,10 +187,12 @@ struct PresentationRow: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.system(size: 14))
+                .foregroundColor(Color.white.opacity(0.4))
         }
-        .padding(.vertical, 4)
+        .padding(16)
+        .background(Color(red: 28/255, green: 32/255, blue: 42/255))
+        .cornerRadius(12)
         .onAppear {
             loadFileInfo()
         }
