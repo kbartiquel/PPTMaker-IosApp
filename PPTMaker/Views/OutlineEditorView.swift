@@ -108,14 +108,6 @@ struct OutlineEditorView: View {
                                                             .padding(.vertical, 2)
                                                             .background(Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.2))
                                                             .cornerRadius(4)
-                                                    } else if slide.isBigNumberSlide {
-                                                        Text("BIG-NUMBER")
-                                                            .font(.system(size: 10, weight: .bold))
-                                                            .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
-                                                            .padding(.horizontal, 6)
-                                                            .padding(.vertical, 2)
-                                                            .background(Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2))
-                                                            .cornerRadius(4)
                                                     }
                                                 }
 
@@ -374,40 +366,6 @@ struct SlideEditorView: View {
                                     .background(cardColor)
                                     .cornerRadius(12)
                             }
-                        }
-                    } else if slide.isBigNumberSlide {
-                        // Big Number
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Big Number")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(secondaryTextColor)
-
-                            TextField("", text: Binding(
-                                get: { slide.bigNumber ?? "" },
-                                set: { slide.bigNumber = $0.isEmpty ? nil : $0 }
-                            ), prompt: Text("e.g., 85%").foregroundColor(secondaryTextColor.opacity(0.6)))
-                                .font(.system(size: 16))
-                                .foregroundColor(textColor)
-                                .padding()
-                                .background(cardColor)
-                                .cornerRadius(12)
-                        }
-
-                        // Description
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Description")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(secondaryTextColor)
-
-                            TextField("", text: Binding(
-                                get: { slide.numberDescription ?? "" },
-                                set: { slide.numberDescription = $0.isEmpty ? nil : $0 }
-                            ), prompt: Text("Describe what the number means").foregroundColor(secondaryTextColor.opacity(0.6)))
-                                .font(.system(size: 16))
-                                .foregroundColor(textColor)
-                                .padding()
-                                .background(cardColor)
-                                .cornerRadius(12)
                         }
                     } else {
                         // Content slide with bullet points

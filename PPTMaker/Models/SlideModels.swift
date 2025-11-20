@@ -70,10 +70,6 @@ struct SlideData: Codable, Identifiable {
     var columnRightTitle: String?
     var columnRightPoints: [String]?
 
-    // NEW: Fields for big-number slides
-    var bigNumber: String?
-    var numberDescription: String?
-
     enum CodingKeys: String, CodingKey {
         case slideNumber = "slide_number"
         case type
@@ -86,8 +82,6 @@ struct SlideData: Codable, Identifiable {
         case columnLeftPoints = "column_left_points"
         case columnRightTitle = "column_right_title"
         case columnRightPoints = "column_right_points"
-        case bigNumber = "big_number"
-        case numberDescription = "number_description"
     }
 
     var isTitleSlide: Bool {
@@ -104,10 +98,6 @@ struct SlideData: Codable, Identifiable {
 
     var isTwoColumnSlide: Bool {
         type == "two-column"
-    }
-
-    var isBigNumberSlide: Bool {
-        type == "big-number"
     }
 }
 
