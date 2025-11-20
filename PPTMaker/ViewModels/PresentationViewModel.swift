@@ -21,6 +21,10 @@ class PresentationViewModel: ObservableObject {
     @Published var slideTypeMode: SlideTypeMode = .dynamic
     @Published var selectedSlideTypes: Set<SlideType> = Set(SlideType.allCases)
 
+    // Tone Selection
+    @Published var selectedTone: PresentationTone = .casual
+    @Published var customToneText: String = ""
+
     // Step 2: Generated Outline (editable)
     @Published var presentationOutline: PresentationOutline?
     @Published var isGeneratingOutline: Bool = false
@@ -44,7 +48,8 @@ class PresentationViewModel: ObservableObject {
     // MARK: - Computed Properties
     var canGenerateOutline: Bool {
         let hasValidSlideTypes = slideTypeMode == .dynamic || !selectedSlideTypes.isEmpty
-        return !topic.isEmpty && !isGeneratingOutline && hasValidSlideTypes
+        let hasValidTone = selectedTone != .custom || !customToneText.isEmpty
+        return !topic.isEmpty && !isGeneratingOutline && hasValidSlideTypes && hasValidTone
     }
 
     var canGeneratePresentation: Bool {
@@ -72,9 +77,13 @@ class PresentationViewModel: ObservableObject {
             // Prepare allowed slide types
             let allowedTypes: [String]? = slideTypeMode == .dynamic ? nil : Array(selectedSlideTypes.map { $0.rawValue })
 
+            // Use custom tone text if custom tone is selected
+            let toneValue = selectedTone == .custom ? customToneText : selectedTone.rawValue
+
             let outline = try await apiService.generateOutline(
                 topic: topic,
                 numSlides: numSlides,
+                tone: toneValue,
                 allowedSlideTypes: allowedTypes
             )
 
@@ -210,6 +219,61 @@ enum SlideType: String, CaseIterable, Identifiable {
         case .section: return "textformat.size"
         case .quote: return "quote.bubble"
         case .twoColumn: return "rectangle.split.2x1"
+        }
+    }
+}
+
+// MARK: - Presentation Tone
+enum PresentationTone: String, CaseIterable, Identifiable {
+    case casual = "casual"
+    case professional = "professional"
+    case formal = "formal"
+    case enthusiastic = "enthusiastic"
+    case inspirational = "inspirational"
+    case humorous = "humorous"
+    case technical = "technical"
+    case creative = "creative"
+    case persuasive = "persuasive"
+    case educational = "educational"
+    case friendly = "friendly"
+    case serious = "serious"
+    case custom = "custom"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .professional: return "Professional"
+        case .casual: return "Casual"
+        case .formal: return "Formal"
+        case .enthusiastic: return "Enthusiastic"
+        case .inspirational: return "Inspirational"
+        case .humorous: return "Humorous"
+        case .technical: return "Technical"
+        case .creative: return "Creative"
+        case .persuasive: return "Persuasive"
+        case .educational: return "Educational"
+        case .friendly: return "Friendly"
+        case .serious: return "Serious"
+        case .custom: return "Custom"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .professional: return "briefcase.fill"
+        case .casual: return "bubble.left.and.bubble.right.fill"
+        case .formal: return "book.closed.fill"
+        case .enthusiastic: return "star.fill"
+        case .inspirational: return "lightbulb.fill"
+        case .humorous: return "face.smiling.fill"
+        case .technical: return "cpu.fill"
+        case .creative: return "paintbrush.fill"
+        case .persuasive: return "megaphone.fill"
+        case .educational: return "graduationcap.fill"
+        case .friendly: return "heart.fill"
+        case .serious: return "exclamationmark.triangle.fill"
+        case .custom: return "pencil.circle.fill"
         }
     }
 }

@@ -36,17 +36,19 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Dynamic background
-                backgroundColor
-                    .ignoresSafeArea()
+                // Dynamic background with subtle gradient
+                LinearGradient(
+                    colors: [
+                        backgroundColor,
+                        isDarkMode ? Color(red: 22/255, green: 22/255, blue: 30/255) : Color(red: 240/255, green: 242/255, blue: 248/255)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 0) {
-                        // App Header with Title and Icon (only show initially)
-                        if viewModel.presentationOutline == nil {
-                            appHeaderSection
-                        }
-
+                    VStack(spacing: 16) {
                         // Step 1: Topic Input
                         topicInputSection
 
@@ -58,7 +60,8 @@ struct ContentView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("PPT Maker")
@@ -145,97 +148,103 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - App Header
-    private var appHeaderSection: some View {
-        VStack(spacing: 12) {
-            // App Icon
-            ZStack {
-                // Gradient background circle
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 59/255, green: 130/255, blue: 246/255),
-                                Color(red: 99/255, green: 102/255, blue: 241/255)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.3), radius: 10, x: 0, y: 5)
-
-                // Icon
-                Image(systemName: "doc.richtext.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.white)
-            }
-
-            // App Title
-            VStack(spacing: 4) {
-                Text("PPT Maker")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(textColor)
-
-                Text("AI-Powered Presentations")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(secondaryTextColor)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .padding(.bottom, 8)
-    }
-
     // MARK: - Step 1: Topic Input
     private var topicInputSection: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            // Topic Input
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Presentation Topic")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(textColor)
+        VStack(alignment: .leading, spacing: 14) {
+            // Topic Input Section
+            VStack(alignment: .leading, spacing: 14) {
+                // Section Header
+                HStack(spacing: 8) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
 
-                TextField("", text: $viewModel.topic, prompt: Text("e.g., 'The Future of Renewable Energy'").foregroundColor(secondaryTextColor.opacity(0.6)))
-                    .font(.system(size: 16))
-                    .foregroundColor(textColor)
-                    .padding()
-                    .background(cardColor)
-                    .cornerRadius(12)
-                    .disabled(viewModel.isGeneratingOutline)
-            }
-
-            // Number of Slides
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Number of Slides")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(textColor)
-
-                    Spacer()
-
-                    Text("\(viewModel.numSlides)")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text("Topic")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(textColor)
                 }
 
-                HStack(spacing: 12) {
-                    Text("5")
-                        .font(.system(size: 14))
+                // Topic Input Card
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("What's your presentation about?")
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(secondaryTextColor)
 
-                    Slider(value: Binding(
-                        get: { Double(viewModel.numSlides) },
-                        set: { viewModel.numSlides = Int($0) }
-                    ), in: 5...15, step: 1)
-                    .accentColor(Color(red: 59/255, green: 130/255, blue: 246/255))
-                    .disabled(viewModel.isGeneratingOutline)
-
-                    Text("15")
-                        .font(.system(size: 14))
-                        .foregroundColor(secondaryTextColor)
+                    TextField("", text: $viewModel.topic, prompt: Text("e.g., 'The Future of Renewable Energy'").foregroundColor(secondaryTextColor.opacity(0.6)))
+                        .font(.system(size: 15))
+                        .foregroundColor(textColor)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2), lineWidth: 1)
+                        )
+                        .disabled(viewModel.isGeneratingOutline)
                 }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(cardColor)
+                        .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+                )
             }
+
+            // Number of Slides Section
+            VStack(alignment: .leading, spacing: 14) {
+                // Section Header
+                HStack(spacing: 8) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+
+                    Text("Slides")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(textColor)
+                }
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Number of slides")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(secondaryTextColor)
+
+                        Spacer()
+
+                        Text("\(viewModel.numSlides)")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    }
+
+                    HStack(spacing: 10) {
+                        Text("5")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(secondaryTextColor)
+
+                        Slider(value: Binding(
+                            get: { Double(viewModel.numSlides) },
+                            set: { viewModel.numSlides = Int($0) }
+                        ), in: 5...15, step: 1)
+                        .accentColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .disabled(viewModel.isGeneratingOutline)
+
+                        Text("15")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(secondaryTextColor)
+                    }
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(cardColor)
+                        .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+                )
+            }
+
+            // Tone Selection Section
+            toneSelectionSection
 
             // Slide Types Section
             slideTypesSection
@@ -248,194 +257,431 @@ struct ContentView: View {
                         await viewModel.generateOutline()
                     }
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 12) {
                         if viewModel.isGeneratingOutline {
                             ProgressView()
                                 .progressViewStyle(.circular)
                                 .tint(.white)
                             Text("Generating Outline...")
                         } else {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 18))
                             Text("Generate Presentation")
                         }
                     }
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color(red: 59/255, green: 130/255, blue: 246/255))
-                    .cornerRadius(12)
+                    .padding(.vertical, 18)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 59/255, green: 130/255, blue: 246/255),
+                                Color(red: 99/255, green: 102/255, blue: 241/255)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(14)
+                    .shadow(color: Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.4), radius: 12, x: 0, y: 6)
                 }
                 .disabled(!viewModel.canGenerateOutline)
                 .opacity(viewModel.canGenerateOutline ? 1 : 0.5)
-                .padding(.top, 8)
+                .padding(.top, 12)
             }
         }
-        .padding(.bottom, 24)
     }
 
     // MARK: - Step 2: Outline Generated
     private var outlineSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Review Outline")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(textColor)
+            // Section Header
+            HStack(spacing: 8) {
+                Image(systemName: "list.bullet.rectangle.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+
+                Text("Outline")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(textColor)
+            }
 
             if let outline = viewModel.presentationOutline {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(outline.presentationTitle)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(textColor)
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(outline.presentationTitle)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(textColor)
+                            .lineLimit(3)
 
-                    Text("\(outline.slides.count) slides")
-                        .font(.system(size: 14))
-                        .foregroundColor(secondaryTextColor)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(cardColor)
-                .cornerRadius(12)
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.text.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(secondaryTextColor)
 
-                Button {
-                    HapticManager.shared.lightTap()
-                    viewModel.showOutlineEditor = true
-                } label: {
-                    HStack {
-                        Image(systemName: "pencil")
-                        Text("Edit Outline")
+                            Text("\(outline.slides.count) slides")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+                        }
                     }
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.15))
-                    .cornerRadius(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                    )
+
+                    Button {
+                        HapticManager.shared.lightTap()
+                        viewModel.showOutlineEditor = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.system(size: 18))
+                            Text("Edit Outline")
+                        }
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.12))
+                        .cornerRadius(14)
+                    }
                 }
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(cardColor)
+                        .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+                )
             }
         }
-        .padding(.bottom, 24)
     }
 
     // MARK: - Template Selection
     private var templateSelectionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Choose Template")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(textColor)
+            // Section Header
+            HStack(spacing: 8) {
+                Image(systemName: "paintpalette.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+
+                Text("Template")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(textColor)
+            }
 
             Button {
                 HapticManager.shared.selection()
                 showTemplateSelection = true
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     // Color swatches
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Circle()
                             .fill(viewModel.selectedTemplate.primaryColor)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1.5)
+                            )
 
                         Circle()
                             .fill(viewModel.selectedTemplate.secondaryColor)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1.5)
+                            )
 
                         Circle()
                             .fill(viewModel.selectedTemplate.accentColor)
-                            .frame(width: 24, height: 24)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1.5)
+                            )
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(viewModel.selectedTemplate.name)
                             .foregroundColor(textColor)
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.system(size: 16, weight: .semibold))
 
                         Text(viewModel.selectedTemplate.description)
                             .foregroundColor(secondaryTextColor)
                             .font(.system(size: 13))
-                            .lineLimit(1)
+                            .lineLimit(2)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .foregroundColor(secondaryTextColor.opacity(0.6))
-                        .font(.system(size: 14))
+                        .foregroundColor(secondaryTextColor.opacity(0.5))
+                        .font(.system(size: 14, weight: .semibold))
                 }
-                .padding()
-                .background(cardColor)
-                .cornerRadius(12)
+                .padding(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                )
             }
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(cardColor)
+                    .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+            )
         }
-        .padding(.bottom, 24)
+    }
+
+    // MARK: - Tone Selection Section
+    private var toneSelectionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Section Header
+            HStack(spacing: 8) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+
+                Text("Tone")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(textColor)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Choose your presentation style")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(secondaryTextColor)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(PresentationTone.allCases) { tone in
+                            Button {
+                                HapticManager.shared.lightTap()
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.selectedTone = tone
+                                }
+                            } label: {
+                                VStack(spacing: 4) {
+                                    // Icon
+                                    ZStack {
+                                        Circle()
+                                            .fill(viewModel.selectedTone == tone ?
+                                                  LinearGradient(
+                                                    colors: [
+                                                        Color(red: 59/255, green: 130/255, blue: 246/255),
+                                                        Color(red: 99/255, green: 102/255, blue: 241/255)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                  ) :
+                                                  LinearGradient(
+                                                    colors: [cardColor, cardColor],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                  ))
+                                            .frame(width: 38, height: 38)
+
+                                        Image(systemName: tone.icon)
+                                            .font(.system(size: 16))
+                                            .foregroundColor(viewModel.selectedTone == tone ?
+                                                            .white :
+                                                            secondaryTextColor)
+                                    }
+
+                                    // Tone name
+                                    Text(tone.displayName)
+                                        .font(.system(size: 10, weight: viewModel.selectedTone == tone ? .semibold : .medium))
+                                        .foregroundColor(viewModel.selectedTone == tone ? textColor : secondaryTextColor)
+                                        .lineLimit(1)
+                                }
+                                .frame(width: 68)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                                        .shadow(color: viewModel.selectedTone == tone ?
+                                                Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.3) :
+                                                Color.black.opacity(isDarkMode ? 0.2 : 0.05),
+                                                radius: viewModel.selectedTone == tone ? 5 : 2,
+                                                x: 0,
+                                                y: viewModel.selectedTone == tone ? 2 : 1)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .strokeBorder(
+                                                    viewModel.selectedTone == tone ?
+                                                    Color(red: 59/255, green: 130/255, blue: 246/255) :
+                                                    Color.clear,
+                                                    lineWidth: 1.5
+                                                )
+                                        )
+                                )
+                            }
+                            .disabled(viewModel.isGeneratingOutline)
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
+                }
+
+                // Custom Tone TextField (shown when Custom is selected)
+                if viewModel.selectedTone == .custom {
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("", text: $viewModel.customToneText, prompt: Text("e.g., Sarcastic but professional").foregroundColor(secondaryTextColor.opacity(0.6)))
+                            .font(.system(size: 13))
+                            .foregroundColor(textColor)
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2), lineWidth: 1)
+                            )
+                            .disabled(viewModel.isGeneratingOutline)
+                            .onChange(of: viewModel.customToneText) { newValue in
+                                // Limit to 100 characters
+                                if newValue.count > 100 {
+                                    viewModel.customToneText = String(newValue.prefix(100))
+                                }
+                            }
+
+                        HStack {
+                            if viewModel.customToneText.isEmpty {
+                                Text("Custom tone description required")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.red.opacity(0.8))
+                            }
+
+                            Spacer()
+
+                            Text("\(viewModel.customToneText.count)/100")
+                                .font(.system(size: 10))
+                                .foregroundColor(secondaryTextColor)
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(cardColor)
+                    .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+            )
+        }
     }
 
     // MARK: - Slide Types Section
     private var slideTypesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Slide Types")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(textColor)
+        VStack(alignment: .leading, spacing: 12) {
+            // Section Header
+            HStack(spacing: 8) {
+                Image(systemName: "rectangle.stack.fill")
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
 
-            // Mode Picker (Dynamic vs Custom)
-            Picker("", selection: $viewModel.slideTypeMode) {
-                Text("Dynamic (AI chooses)").tag(SlideTypeMode.dynamic)
-                Text("Custom Selection").tag(SlideTypeMode.custom)
+                Text("Slide Types")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(textColor)
             }
-            .pickerStyle(.segmented)
-            .disabled(viewModel.isGeneratingOutline)
 
-            // Custom slide type checkboxes (only shown in Custom mode)
-            if viewModel.slideTypeMode == .custom {
-                VStack(spacing: 12) {
-                    ForEach(SlideType.allCases) { slideType in
-                        Button {
-                            HapticManager.shared.lightTap()
-                            toggleSlideType(slideType)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: viewModel.selectedSlideTypes.contains(slideType) ? "checkmark.square.fill" : "square")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? Color(red: 59/255, green: 130/255, blue: 246/255) : secondaryTextColor.opacity(0.5))
+            VStack(alignment: .leading, spacing: 12) {
+                // Mode Picker (Dynamic vs Custom)
+                Picker("", selection: $viewModel.slideTypeMode) {
+                    Text("Dynamic (AI chooses)").tag(SlideTypeMode.dynamic)
+                    Text("Custom Selection").tag(SlideTypeMode.custom)
+                }
+                .pickerStyle(.segmented)
+                .disabled(viewModel.isGeneratingOutline)
 
-                                Image(systemName: slideType.icon)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(secondaryTextColor)
-                                    .frame(width: 20)
+                // Custom slide type checkboxes (only shown in Custom mode)
+                if viewModel.slideTypeMode == .custom {
+                    VStack(spacing: 10) {
+                        ForEach(SlideType.allCases) { slideType in
+                            Button {
+                                HapticManager.shared.lightTap()
+                                toggleSlideType(slideType)
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Image(systemName: viewModel.selectedSlideTypes.contains(slideType) ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? Color(red: 59/255, green: 130/255, blue: 246/255) : secondaryTextColor.opacity(0.4))
 
-                                Text(slideType.displayName)
-                                    .font(.system(size: 15))
-                                    .foregroundColor(textColor)
+                                    Image(systemName: slideType.icon)
+                                        .font(.system(size: 16))
+                                        .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? textColor : secondaryTextColor)
+                                        .frame(width: 24)
 
-                                Spacer()
+                                    Text(slideType.displayName)
+                                        .font(.system(size: 15, weight: viewModel.selectedSlideTypes.contains(slideType) ? .medium : .regular))
+                                        .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? textColor : secondaryTextColor)
+
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .strokeBorder(
+                                                    viewModel.selectedSlideTypes.contains(slideType) ?
+                                                    Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.3) :
+                                                    Color.clear,
+                                                    lineWidth: 1.5
+                                                )
+                                        )
+                                )
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(cardColor)
-                            .cornerRadius(8)
+                            .disabled(viewModel.isGeneratingOutline)
                         }
-                        .disabled(viewModel.isGeneratingOutline)
-                    }
 
-                    if viewModel.selectedSlideTypes.isEmpty {
-                        Text("Select at least one slide type")
-                            .font(.system(size: 13))
-                            .foregroundColor(.red.opacity(0.8))
+                        if viewModel.selectedSlideTypes.isEmpty {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.red.opacity(0.8))
+
+                                Text("Select at least one slide type")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.red.opacity(0.8))
+                            }
                             .padding(.top, 4)
+                        }
                     }
-                }
-                .padding(.top, 4)
-            } else {
-                // Show info text for Dynamic mode
-                HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .padding(.top, 8)
+                } else {
+                    // Show info text for Dynamic mode
+                    HStack(spacing: 10) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
 
-                    Text("AI will intelligently choose the best slide types for your content")
-                        .font(.system(size: 13))
-                        .foregroundColor(secondaryTextColor)
-                        .lineLimit(2)
+                        Text("AI will intelligently choose the best slide types for your content")
+                            .font(.system(size: 14))
+                            .foregroundColor(secondaryTextColor)
+                            .lineLimit(2)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.1))
+                    )
+                    .padding(.top, 6)
                 }
-                .padding(.top, 4)
             }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(cardColor)
+                    .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.08), radius: 12, x: 0, y: 4)
+            )
         }
     }
 
@@ -449,30 +695,41 @@ struct ContentView: View {
 
     // MARK: - Generate Button
     private var generateButtonSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             Button {
                 HapticManager.shared.mediumTap()
                 Task {
                     await viewModel.generatePresentation()
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     if viewModel.isGeneratingPresentation {
                         ProgressView()
                             .progressViewStyle(.circular)
                             .tint(.white)
                         Text("Creating Presentation...")
                     } else {
-                        Image(systemName: "doc.richtext")
+                        Image(systemName: "doc.richtext.fill")
+                            .font(.system(size: 18))
                         Text("Create Presentation")
                     }
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color(red: 59/255, green: 130/255, blue: 246/255))
-                .cornerRadius(12)
+                .padding(.vertical, 18)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 59/255, green: 130/255, blue: 246/255),
+                            Color(red: 99/255, green: 102/255, blue: 241/255)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(14)
+                .shadow(color: Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.4), radius: 12, x: 0, y: 6)
             }
             .disabled(!viewModel.canGeneratePresentation)
             .opacity(viewModel.canGeneratePresentation ? 1 : 0.5)
@@ -481,16 +738,19 @@ struct ContentView: View {
                 HapticManager.shared.lightTap()
                 viewModel.resetToNewPresentation()
             } label: {
-                Text("Start Over")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.red.opacity(0.9))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.red.opacity(0.15))
-                    .cornerRadius(10)
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 14))
+                    Text("Start Over")
+                }
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.red.opacity(0.9))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.red.opacity(0.12))
+                .cornerRadius(14)
             }
         }
-        .padding(.bottom, 40)
     }
 }
 

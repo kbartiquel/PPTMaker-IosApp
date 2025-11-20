@@ -31,32 +31,64 @@ struct OnboardingView: View {
 
     let pages: [OnboardingPage] = [
         OnboardingPage(
-            icon: "sparkles",
+            icon: "wand.and.stars",
+            iconColor: Color(red: 99/255, green: 102/255, blue: 241/255),
+            title: "Create Stunning Presentations in Seconds",
+            description: "Just enter a topic and let AI craft a complete, professional presentation for you",
+            features: [
+                Feature(icon: "brain", text: "Powered by advanced AI", color: Color(red: 99/255, green: 102/255, blue: 241/255)),
+                Feature(icon: "clock", text: "Ready in seconds", color: Color(red: 168/255, green: 85/255, blue: 247/255)),
+                Feature(icon: "star.fill", text: "Professional quality", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+            ],
+            visualType: .animated
+        ),
+        OnboardingPage(
+            icon: "slider.horizontal.3",
             iconColor: Color(red: 59/255, green: 130/255, blue: 246/255),
-            title: "AI-Powered Presentations",
-            description: "Create professional PowerPoint presentations in seconds with the power of AI",
-            exampleTopics: ["Climate Change", "Marketing Strategy", "Product Launch"]
+            title: "Control Your Presentation Style",
+            description: "Choose between Dynamic AI or customize which slide types to use",
+            features: [
+                Feature(icon: "sparkles", text: "Dynamic: AI picks the best mix", color: Color(red: 59/255, green: 130/255, blue: 246/255)),
+                Feature(icon: "checkmark.circle", text: "Custom: You choose slide types", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
+                Feature(icon: "list.bullet", text: "Quotes, columns, sections & more", color: Color(red: 168/255, green: 85/255, blue: 247/255))
+            ],
+            visualType: .slideTypes
         ),
         OnboardingPage(
-            icon: "pencil.and.outline",
+            icon: "pencil.and.list.clipboard",
             iconColor: Color(red: 139/255, green: 92/255, blue: 246/255),
-            title: "Edit & Customize",
-            description: "Review and edit AI-generated outlines before creating your final presentation",
-            exampleTopics: nil
+            title: "Edit Every Detail",
+            description: "Fine-tune your presentation before generating the final file",
+            features: [
+                Feature(icon: "text.cursor", text: "Edit titles and content", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
+                Feature(icon: "arrow.up.arrow.down", text: "Reorder slides", color: Color(red: 168/255, green: 85/255, blue: 247/255)),
+                Feature(icon: "plus.circle", text: "Add or remove slides", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+            ],
+            visualType: .standard
         ),
         OnboardingPage(
-            icon: "paintpalette.fill",
+            icon: "paintbrush.fill",
             iconColor: Color(red: 251/255, green: 146/255, blue: 60/255),
-            title: "15 Beautiful Templates",
-            description: "Choose from professionally designed templates for any occasion",
-            exampleTopics: nil
+            title: "Beautiful Templates",
+            description: "Choose from professionally designed templates that match your style",
+            features: [
+                Feature(icon: "briefcase.fill", text: "Corporate & Business", color: Color(red: 59/255, green: 130/255, blue: 246/255)),
+                Feature(icon: "graduationcap.fill", text: "Academic & Educational", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
+                Feature(icon: "sparkles", text: "Modern & Creative", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+            ],
+            visualType: .templates
         ),
         OnboardingPage(
             icon: "square.and.arrow.down.fill",
             iconColor: Color(red: 16/255, green: 185/255, blue: 129/255),
-            title: "Download & Share",
-            description: "Export your presentations as PowerPoint files ready to present anywhere",
-            exampleTopics: nil
+            title: "Export & Present Anywhere",
+            description: "Download your presentation as a PowerPoint file ready to use",
+            features: [
+                Feature(icon: "doc.fill", text: ".pptx format", color: Color(red: 16/255, green: 185/255, blue: 129/255)),
+                Feature(icon: "shareplay", text: "Share instantly", color: Color(red: 20/255, green: 184/255, blue: 166/255)),
+                Feature(icon: "checkmark.seal.fill", text: "Fully editable in PowerPoint", color: Color(red: 34/255, green: 197/255, blue: 94/255))
+            ],
+            visualType: .standard
         )
     ]
 
@@ -125,7 +157,21 @@ struct OnboardingPage {
     let iconColor: Color
     let title: String
     let description: String
-    let exampleTopics: [String]?
+    let features: [Feature]
+    let visualType: VisualType
+
+    enum VisualType {
+        case standard
+        case animated
+        case slideTypes
+        case templates
+    }
+}
+
+struct Feature {
+    let icon: String
+    let text: String
+    let color: Color
 }
 
 // MARK: - Onboarding Page View
@@ -135,70 +181,217 @@ struct OnboardingPageView: View {
     let secondaryTextColor: Color
     let cardColor: Color
 
-    var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
+    @State private var animateIcon = false
 
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                Spacer()
+                    .frame(height: 40)
+
+                // Icon with gradient background
+                ZStack {
+                    // Gradient circle background
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    page.iconColor.opacity(0.3),
+                                    page.iconColor.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 140, height: 140)
+                        .blur(radius: 20)
+
+                    Circle()
+                        .fill(page.iconColor.opacity(0.15))
+                        .frame(width: 120, height: 120)
+
+                    Image(systemName: page.icon)
+                        .font(.system(size: 56, weight: .medium))
+                        .foregroundColor(page.iconColor)
+                        .scaleEffect(animateIcon ? 1.0 : 0.8)
+                        .opacity(animateIcon ? 1.0 : 0.5)
+                }
+                .padding(.bottom, 16)
+
+                // Title
+                Text(page.title)
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundColor(textColor)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+                    .padding(.horizontal, 32)
+
+                // Description
+                Text(page.description)
+                    .font(.system(size: 17))
+                    .foregroundColor(secondaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(6)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 4)
+
+                // Features list
+                VStack(spacing: 14) {
+                    ForEach(Array(page.features.enumerated()), id: \.offset) { index, feature in
+                        FeatureRow(
+                            feature: feature,
+                            textColor: textColor,
+                            cardColor: cardColor,
+                            delay: Double(index) * 0.1
+                        )
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 20)
+
+                // Visual element based on page type
+                if page.visualType == .slideTypes {
+                    SlideTypeVisual()
+                        .padding(.top, 12)
+                } else if page.visualType == .templates {
+                    TemplatePreviewVisual()
+                        .padding(.top, 12)
+                }
+
+                Spacer()
+                    .frame(height: 60)
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                animateIcon = true
+            }
+        }
+    }
+}
+
+// MARK: - Feature Row
+struct FeatureRow: View {
+    let feature: Feature
+    let textColor: Color
+    let cardColor: Color
+    let delay: Double
+
+    @State private var appear = false
+
+    var body: some View {
+        HStack(spacing: 14) {
             // Icon
             ZStack {
                 Circle()
-                    .fill(page.iconColor.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(feature.color.opacity(0.15))
+                    .frame(width: 44, height: 44)
 
-                Image(systemName: page.icon)
-                    .font(.system(size: 60))
-                    .foregroundColor(page.iconColor)
+                Image(systemName: feature.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(feature.color)
             }
-            .padding(.bottom, 8)
 
-            // Title
-            Text(page.title)
-                .font(.system(size: 28, weight: .bold))
+            // Text
+            Text(feature.text)
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(textColor)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
 
-            // Description
-            Text(page.description)
-                .font(.system(size: 16))
-                .foregroundColor(secondaryTextColor)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-                .padding(.horizontal, 40)
-
-            // Example Topics
-            if let topics = page.exampleTopics {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Try these topics:")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(secondaryTextColor)
-                        .padding(.leading, 4)
-
-                    ForEach(topics, id: \.self) { topic in
-                        HStack(spacing: 12) {
-                            Image(systemName: "lightbulb.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(red: 251/255, green: 191/255, blue: 36/255))
-
-                            Text(topic)
-                                .font(.system(size: 15))
-                                .foregroundColor(textColor)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(cardColor)
-                        .cornerRadius(10)
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.top, 8)
-            }
-
-            Spacer()
             Spacer()
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(cardColor)
+                .shadow(color: feature.color.opacity(0.1), radius: 8, x: 0, y: 4)
+        )
+        .opacity(appear ? 1 : 0)
+        .offset(x: appear ? 0 : -20)
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(delay)) {
+                appear = true
+            }
+        }
+    }
+}
+
+// MARK: - Slide Type Visual
+struct SlideTypeVisual: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            SlideTypeBadge(icon: "list.bullet", label: "Content", color: Color(red: 59/255, green: 130/255, blue: 246/255))
+            SlideTypeBadge(icon: "quote.bubble", label: "Quote", color: Color(red: 139/255, green: 92/255, blue: 246/255))
+            SlideTypeBadge(icon: "rectangle.split.2x1", label: "Columns", color: Color(red: 16/255, green: 185/255, blue: 129/255))
+        }
+        .padding(.horizontal, 32)
+    }
+}
+
+struct SlideTypeBadge: View {
+    let icon: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 50, height: 50)
+
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(color)
+            }
+
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Template Preview Visual
+struct TemplatePreviewVisual: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            TemplateCard(color: Color(red: 59/255, green: 130/255, blue: 246/255))
+            TemplateCard(color: Color(red: 139/255, green: 92/255, blue: 246/255))
+            TemplateCard(color: Color(red: 236/255, green: 72/255, blue: 153/255))
+        }
+        .padding(.horizontal, 40)
+    }
+}
+
+struct TemplateCard: View {
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            RoundedRectangle(cornerRadius: 6)
+                .fill(color.opacity(0.3))
+                .frame(height: 60)
+                .overlay(
+                    VStack(spacing: 3) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(color.opacity(0.6))
+                            .frame(height: 8)
+                            .padding(.horizontal, 6)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(color.opacity(0.4))
+                            .frame(height: 4)
+                            .padding(.horizontal, 6)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(color.opacity(0.4))
+                            .frame(height: 4)
+                            .padding(.horizontal, 6)
+                    }
+                    .padding(.vertical, 8)
+                )
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
