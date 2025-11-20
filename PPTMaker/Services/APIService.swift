@@ -39,7 +39,7 @@ class APIService {
     #endif
 
     // MARK: - Step 1: Generate Outline
-    func generateOutline(topic: String, numSlides: Int) async throws -> PresentationOutline {
+    func generateOutline(topic: String, numSlides: Int, allowedSlideTypes: [String]? = nil) async throws -> PresentationOutline {
         guard let url = URL(string: "\(APIService.baseURL)/generate-outline") else {
             throw APIError.invalidURL
         }
@@ -48,7 +48,7 @@ class APIService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let requestBody = OutlineRequest(topic: topic, numSlides: numSlides)
+        let requestBody = OutlineRequest(topic: topic, numSlides: numSlides, allowedSlideTypes: allowedSlideTypes)
         request.httpBody = try JSONEncoder().encode(requestBody)
 
         do {

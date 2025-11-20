@@ -237,6 +237,9 @@ struct ContentView: View {
                 }
             }
 
+            // Slide Types Section
+            slideTypesSection
+
             // Generate Button (only shown when no outline exists)
             if viewModel.presentationOutline == nil {
                 Button {
@@ -362,6 +365,86 @@ struct ContentView: View {
             }
         }
         .padding(.bottom, 24)
+    }
+
+    // MARK: - Slide Types Section
+    private var slideTypesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Slide Types")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(textColor)
+
+            // Mode Picker (Dynamic vs Custom)
+            Picker("", selection: $viewModel.slideTypeMode) {
+                Text("Dynamic (AI chooses)").tag(SlideTypeMode.dynamic)
+                Text("Custom Selection").tag(SlideTypeMode.custom)
+            }
+            .pickerStyle(.segmented)
+            .disabled(viewModel.isGeneratingOutline)
+
+            // Custom slide type checkboxes (only shown in Custom mode)
+            if viewModel.slideTypeMode == .custom {
+                VStack(spacing: 12) {
+                    ForEach(SlideType.allCases) { slideType in
+                        Button {
+                            HapticManager.shared.lightTap()
+                            toggleSlideType(slideType)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: viewModel.selectedSlideTypes.contains(slideType) ? "checkmark.square.fill" : "square")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? Color(red: 59/255, green: 130/255, blue: 246/255) : secondaryTextColor.opacity(0.5))
+
+                                Image(systemName: slideType.icon)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(secondaryTextColor)
+                                    .frame(width: 20)
+
+                                Text(slideType.displayName)
+                                    .font(.system(size: 15))
+                                    .foregroundColor(textColor)
+
+                                Spacer()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(cardColor)
+                            .cornerRadius(8)
+                        }
+                        .disabled(viewModel.isGeneratingOutline)
+                    }
+
+                    if viewModel.selectedSlideTypes.isEmpty {
+                        Text("Select at least one slide type")
+                            .font(.system(size: 13))
+                            .foregroundColor(.red.opacity(0.8))
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(.top, 4)
+            } else {
+                // Show info text for Dynamic mode
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+
+                    Text("AI will intelligently choose the best slide types for your content")
+                        .font(.system(size: 13))
+                        .foregroundColor(secondaryTextColor)
+                        .lineLimit(2)
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    private func toggleSlideType(_ type: SlideType) {
+        if viewModel.selectedSlideTypes.contains(type) {
+            viewModel.selectedSlideTypes.remove(type)
+        } else {
+            viewModel.selectedSlideTypes.insert(type)
+        }
     }
 
     // MARK: - Generate Button

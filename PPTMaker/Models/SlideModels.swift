@@ -11,10 +11,12 @@ import Foundation
 struct OutlineRequest: Codable {
     let topic: String
     let numSlides: Int
+    let allowedSlideTypes: [String]?
 
     enum CodingKeys: String, CodingKey {
         case topic
         case numSlides = "num_slides"
+        case allowedSlideTypes = "allowed_slide_types"
     }
 }
 

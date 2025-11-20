@@ -17,6 +17,10 @@ class PresentationViewModel: ObservableObject {
     @Published var topic: String = ""
     @Published var numSlides: Int = 8
 
+    // Slide Type Selection
+    @Published var slideTypeMode: SlideTypeMode = .dynamic
+    @Published var selectedSlideTypes: Set<SlideType> = Set(SlideType.allCases)
+
     // Step 2: Generated Outline (editable)
     @Published var presentationOutline: PresentationOutline?
     @Published var isGeneratingOutline: Bool = false
@@ -39,7 +43,8 @@ class PresentationViewModel: ObservableObject {
 
     // MARK: - Computed Properties
     var canGenerateOutline: Bool {
-        !topic.isEmpty && !isGeneratingOutline
+        let hasValidSlideTypes = slideTypeMode == .dynamic || !selectedSlideTypes.isEmpty
+        return !topic.isEmpty && !isGeneratingOutline && hasValidSlideTypes
     }
 
     var canGeneratePresentation: Bool {
@@ -64,9 +69,13 @@ class PresentationViewModel: ObservableObject {
         errorMessage = nil
 
         do {
+            // Prepare allowed slide types
+            let allowedTypes: [String]? = slideTypeMode == .dynamic ? nil : Array(selectedSlideTypes.map { $0.rawValue })
+
             let outline = try await apiService.generateOutline(
                 topic: topic,
-                numSlides: numSlides
+                numSlides: numSlides,
+                allowedSlideTypes: allowedTypes
             )
 
             presentationOutline = outline
@@ -169,5 +178,38 @@ class PresentationViewModel: ObservableObject {
         generatedFileURL = nil
         showSuccess = false
         showOutlineEditor = false
+    }
+}
+
+// MARK: - Slide Type Selection Enums
+enum SlideTypeMode {
+    case dynamic
+    case custom
+}
+
+enum SlideType: String, CaseIterable, Identifiable {
+    case content = "content"
+    case section = "section"
+    case quote = "quote"
+    case twoColumn = "two-column"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .content: return "Content (bullet points)"
+        case .section: return "Section headers"
+        case .quote: return "Quotes"
+        case .twoColumn: return "Two-column comparisons"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .content: return "list.bullet"
+        case .section: return "textformat.size"
+        case .quote: return "quote.bubble"
+        case .twoColumn: return "rectangle.split.2x1"
+        }
     }
 }
