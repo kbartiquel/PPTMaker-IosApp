@@ -55,8 +55,24 @@ struct SlideData: Codable, Identifiable {
     let slideNumber: Int
     let type: String
     var title: String
+
+    // Existing fields for title and content slides
     var subtitle: String?
     var bulletPoints: [String]?
+
+    // NEW: Fields for quote slides
+    var quoteText: String?
+    var quoteAuthor: String?
+
+    // NEW: Fields for two-column slides
+    var columnLeftTitle: String?
+    var columnLeftPoints: [String]?
+    var columnRightTitle: String?
+    var columnRightPoints: [String]?
+
+    // NEW: Fields for big-number slides
+    var bigNumber: String?
+    var numberDescription: String?
 
     enum CodingKeys: String, CodingKey {
         case slideNumber = "slide_number"
@@ -64,10 +80,34 @@ struct SlideData: Codable, Identifiable {
         case title
         case subtitle
         case bulletPoints = "bullet_points"
+        case quoteText = "quote_text"
+        case quoteAuthor = "quote_author"
+        case columnLeftTitle = "column_left_title"
+        case columnLeftPoints = "column_left_points"
+        case columnRightTitle = "column_right_title"
+        case columnRightPoints = "column_right_points"
+        case bigNumber = "big_number"
+        case numberDescription = "number_description"
     }
 
     var isTitleSlide: Bool {
         type == "title"
+    }
+
+    var isQuoteSlide: Bool {
+        type == "quote"
+    }
+
+    var isSectionSlide: Bool {
+        type == "section"
+    }
+
+    var isTwoColumnSlide: Bool {
+        type == "two-column"
+    }
+
+    var isBigNumberSlide: Bool {
+        type == "big-number"
     }
 }
 

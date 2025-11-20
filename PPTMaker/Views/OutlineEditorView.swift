@@ -75,6 +75,7 @@ struct OutlineEditorView: View {
                                                         .font(.system(size: 12, weight: .medium))
                                                         .foregroundColor(secondaryTextColor)
 
+                                                        // Slide type badge
                                                     if slide.isTitleSlide {
                                                         Text("TITLE")
                                                             .font(.system(size: 10, weight: .bold))
@@ -82,6 +83,38 @@ struct OutlineEditorView: View {
                                                             .padding(.horizontal, 6)
                                                             .padding(.vertical, 2)
                                                             .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2))
+                                                            .cornerRadius(4)
+                                                    } else if slide.isSectionSlide {
+                                                        Text("SECTION")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                            .foregroundColor(Color(red: 245/255, green: 158/255, blue: 11/255))
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color(red: 245/255, green: 158/255, blue: 11/255).opacity(0.2))
+                                                            .cornerRadius(4)
+                                                    } else if slide.isQuoteSlide {
+                                                        Text("QUOTE")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                            .foregroundColor(Color(red: 139/255, green: 92/255, blue: 246/255))
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color(red: 139/255, green: 92/255, blue: 246/255).opacity(0.2))
+                                                            .cornerRadius(4)
+                                                    } else if slide.isTwoColumnSlide {
+                                                        Text("TWO-COLUMN")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                            .foregroundColor(Color(red: 16/255, green: 185/255, blue: 129/255))
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color(red: 16/255, green: 185/255, blue: 129/255).opacity(0.2))
+                                                            .cornerRadius(4)
+                                                    } else if slide.isBigNumberSlide {
+                                                        Text("BIG-NUMBER")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                            .foregroundColor(Color(red: 239/255, green: 68/255, blue: 68/255))
+                                                            .padding(.horizontal, 6)
+                                                            .padding(.vertical, 2)
+                                                            .background(Color(red: 239/255, green: 68/255, blue: 68/255).opacity(0.2))
                                                             .cornerRadius(4)
                                                     }
                                                 }
@@ -204,6 +237,7 @@ struct SlideEditorView: View {
                             .cornerRadius(12)
                     }
 
+                    // Type-specific content
                     if slide.isTitleSlide {
                         // Subtitle
                         VStack(alignment: .leading, spacing: 12) {
@@ -221,8 +255,162 @@ struct SlideEditorView: View {
                                 .background(cardColor)
                                 .cornerRadius(12)
                         }
+                    } else if slide.isSectionSlide {
+                        // Section slides only have a title - show info
+                        Text("Section slides display only the title as a large divider")
+                            .font(.system(size: 14))
+                            .foregroundColor(secondaryTextColor)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(cardColor)
+                            .cornerRadius(12)
+                    } else if slide.isQuoteSlide {
+                        // Quote Text
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Quote Text")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextEditor(text: Binding(
+                                get: { slide.quoteText ?? "" },
+                                set: { slide.quoteText = $0.isEmpty ? nil : $0 }
+                            ))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .frame(height: 100)
+                                .padding(8)
+                                .background(cardColor)
+                                .cornerRadius(12)
+                        }
+
+                        // Quote Author
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Author")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextField("", text: Binding(
+                                get: { slide.quoteAuthor ?? "" },
+                                set: { slide.quoteAuthor = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("Enter author name").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                        }
+                    } else if slide.isTwoColumnSlide {
+                        // Left Column
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Left Column Title")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextField("", text: Binding(
+                                get: { slide.columnLeftTitle ?? "" },
+                                set: { slide.columnLeftTitle = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("e.g., Before").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+
+                            Text("Left Column Points")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+                                .padding(.top, 8)
+
+                            ForEach(Array((slide.columnLeftPoints ?? []).enumerated()), id: \.offset) { index, point in
+                                TextField("", text: Binding(
+                                    get: { slide.columnLeftPoints?[index] ?? "" },
+                                    set: { newValue in
+                                        if slide.columnLeftPoints != nil {
+                                            slide.columnLeftPoints![index] = newValue
+                                        }
+                                    }
+                                ), prompt: Text("Point").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                    .font(.system(size: 16))
+                                    .foregroundColor(textColor)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                            }
+                        }
+
+                        // Right Column
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Right Column Title")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextField("", text: Binding(
+                                get: { slide.columnRightTitle ?? "" },
+                                set: { slide.columnRightTitle = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("e.g., After").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+
+                            Text("Right Column Points")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+                                .padding(.top, 8)
+
+                            ForEach(Array((slide.columnRightPoints ?? []).enumerated()), id: \.offset) { index, point in
+                                TextField("", text: Binding(
+                                    get: { slide.columnRightPoints?[index] ?? "" },
+                                    set: { newValue in
+                                        if slide.columnRightPoints != nil {
+                                            slide.columnRightPoints![index] = newValue
+                                        }
+                                    }
+                                ), prompt: Text("Point").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                    .font(.system(size: 16))
+                                    .foregroundColor(textColor)
+                                    .padding()
+                                    .background(cardColor)
+                                    .cornerRadius(12)
+                            }
+                        }
+                    } else if slide.isBigNumberSlide {
+                        // Big Number
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Big Number")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextField("", text: Binding(
+                                get: { slide.bigNumber ?? "" },
+                                set: { slide.bigNumber = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("e.g., 85%").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                        }
+
+                        // Description
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Description")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
+
+                            TextField("", text: Binding(
+                                get: { slide.numberDescription ?? "" },
+                                set: { slide.numberDescription = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("Describe what the number means").foregroundColor(secondaryTextColor.opacity(0.6)))
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                                .padding()
+                                .background(cardColor)
+                                .cornerRadius(12)
+                        }
                     } else {
-                        // Bullet Points
+                        // Content slide with bullet points
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Bullet Points")
                                 .font(.system(size: 14, weight: .medium))
