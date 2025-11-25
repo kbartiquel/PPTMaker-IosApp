@@ -79,10 +79,10 @@ struct OutlineEditorView: View {
                                                     if slide.isTitleSlide {
                                                         Text("TITLE")
                                                             .font(.system(size: 10, weight: .bold))
-                                                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                                                            .foregroundColor(Color.brandPrimary)
                                                             .padding(.horizontal, 6)
                                                             .padding(.vertical, 2)
-                                                            .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2))
+                                                            .background(Color.brandPrimary.opacity(0.2))
                                                             .cornerRadius(4)
                                                     } else if slide.isSectionSlide {
                                                         Text("SECTION")
@@ -95,10 +95,10 @@ struct OutlineEditorView: View {
                                                     } else if slide.isQuoteSlide {
                                                         Text("QUOTE")
                                                             .font(.system(size: 10, weight: .bold))
-                                                            .foregroundColor(Color(red: 139/255, green: 92/255, blue: 246/255))
+                                                            .foregroundColor(Color.brandPrimary)
                                                             .padding(.horizontal, 6)
                                                             .padding(.vertical, 2)
-                                                            .background(Color(red: 139/255, green: 92/255, blue: 246/255).opacity(0.2))
+                                                            .background(Color.brandPrimary.opacity(0.2))
                                                             .cornerRadius(4)
                                                     } else if slide.isTwoColumnSlide {
                                                         Text("TWO-COLUMN")
@@ -111,7 +111,7 @@ struct OutlineEditorView: View {
                                                     }
                                                 }
 
-                                                Text(slide.title)
+                                                Text(slide.title ?? slide.quoteText ?? "Untitled")
                                                     .font(.system(size: 15, weight: .medium))
                                                     .foregroundColor(textColor)
                                                     .lineLimit(1)
@@ -164,7 +164,7 @@ struct OutlineEditorView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
                     .fontWeight(.semibold)
                 }
             }
@@ -215,18 +215,23 @@ struct SlideEditorView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Slide Title
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Slide Title")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(secondaryTextColor)
+                    // Slide Title (optional for quote slides)
+                    if !slide.isQuoteSlide {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Slide Title")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(secondaryTextColor)
 
-                        TextField("", text: $slide.title, prompt: Text("Enter slide title").foregroundColor(secondaryTextColor.opacity(0.6)))
+                            TextField("", text: Binding(
+                                get: { slide.title ?? "" },
+                                set: { slide.title = $0.isEmpty ? nil : $0 }
+                            ), prompt: Text("Enter slide title").foregroundColor(secondaryTextColor.opacity(0.6)))
                             .font(.system(size: 16))
                             .foregroundColor(textColor)
                             .padding()
                             .background(cardColor)
                             .cornerRadius(12)
+                        }
                     }
 
                     // Type-specific content
@@ -409,10 +414,10 @@ struct SlideEditorView: View {
                                     Text("Add Bullet Point")
                                 }
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                                .foregroundColor(Color.brandPrimary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.15))
+                                .background(Color.brandPrimary.opacity(0.15))
                                 .cornerRadius(10)
                             }
                         }
@@ -432,7 +437,7 @@ struct SlideEditorView: View {
                     onSave(slide)
                     dismiss()
                 }
-                .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                .foregroundColor(Color.brandPrimary)
                 .fontWeight(.semibold)
             }
         }

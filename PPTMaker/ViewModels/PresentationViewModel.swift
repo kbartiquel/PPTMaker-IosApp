@@ -41,6 +41,10 @@ class PresentationViewModel: ObservableObject {
     @Published var showSuccess: Bool = false
     @Published var showOutlineEditor: Bool = false
 
+    // Paywall State
+    @Published var showPaywall: Bool = false
+    @Published var isPaywallLimitTriggered: Bool = false
+
     // MARK: - Services
     private let apiService = APIService()
     private let fileService = FileService()
@@ -70,6 +74,14 @@ class PresentationViewModel: ObservableObject {
     func generateOutline() async {
         guard canGenerateOutline else { return }
 
+        // Check if user hit limit BEFORE generation (premium users bypass this)
+        let hasReachedLimit = await LimitTrackingService.shared.hasReachedOutlineLimit()
+        if hasReachedLimit {
+            isPaywallLimitTriggered = true
+            showPaywall = true
+            return
+        }
+
         isGeneratingOutline = true
         errorMessage = nil
 
@@ -90,8 +102,18 @@ class PresentationViewModel: ObservableObject {
             presentationOutline = outline
             showOutlineEditor = true
 
+            // Track successful outline generation
+            Analytics.shared.trackOutlineGenerated(topic: topic, numSlides: numSlides, tone: toneValue)
+
+            // Record outline generation for limit tracking (after successful generation)
+            LimitTrackingService.shared.recordOutlineGeneration()
+
+            // Post notification to update limit badge
+            NotificationCenter.default.post(name: .outlineGenerated, object: nil)
+
         } catch {
             errorMessage = error.localizedDescription
+            Analytics.shared.trackOutlineGenerationFailed(error: error.localizedDescription)
         }
 
         isGeneratingOutline = false
@@ -104,6 +126,7 @@ class PresentationViewModel: ObservableObject {
 
         outline.slides[index] = newSlide
         presentationOutline = outline
+        Analytics.shared.trackSlideEdited()
     }
 
     func removeSlide(at index: Int) {
@@ -111,15 +134,24 @@ class PresentationViewModel: ObservableObject {
         guard index < outline.slides.count else { return }
 
         outline.slides.remove(at: index)
-        // Update slide numbers
+        Analytics.shared.trackSlideRemoved()
+        // Update slide numbers - preserve all slide fields
         for i in 0..<outline.slides.count {
-            outline.slides[i] = SlideData(
+            var updatedSlide = outline.slides[i]
+            updatedSlide = SlideData(
                 slideNumber: i + 1,
-                type: outline.slides[i].type,
-                title: outline.slides[i].title,
-                subtitle: outline.slides[i].subtitle,
-                bulletPoints: outline.slides[i].bulletPoints
+                type: updatedSlide.type,
+                title: updatedSlide.title,
+                subtitle: updatedSlide.subtitle,
+                bulletPoints: updatedSlide.bulletPoints,
+                quoteText: updatedSlide.quoteText,
+                quoteAuthor: updatedSlide.quoteAuthor,
+                columnLeftTitle: updatedSlide.columnLeftTitle,
+                columnLeftPoints: updatedSlide.columnLeftPoints,
+                columnRightTitle: updatedSlide.columnRightTitle,
+                columnRightPoints: updatedSlide.columnRightPoints
             )
+            outline.slides[i] = updatedSlide
         }
         presentationOutline = outline
     }
@@ -128,6 +160,14 @@ class PresentationViewModel: ObservableObject {
     func generatePresentation() async {
         guard let outline = presentationOutline else { return }
         guard canGeneratePresentation else { return }
+
+        // Check if user hit limit BEFORE generation (premium users bypass this)
+        let hasReachedLimit = await LimitTrackingService.shared.hasReachedPresentationLimit()
+        if hasReachedLimit {
+            isPaywallLimitTriggered = true
+            showPaywall = true
+            return
+        }
 
         isGeneratingPresentation = true
         errorMessage = nil
@@ -150,8 +190,18 @@ class PresentationViewModel: ObservableObject {
             generatedFileURL = fileURL
             showSuccess = true
 
+            // Track successful presentation generation
+            Analytics.shared.trackPresentationGenerated(template: selectedTemplate.id, numSlides: outline.slides.count)
+
+            // Record presentation generation for limit tracking (after successful generation)
+            LimitTrackingService.shared.recordPresentationGeneration()
+
+            // Track presentation for review request (after 4 presentations)
+            ReviewManager.shared.trackPresentationGenerated()
+
         } catch {
             errorMessage = error.localizedDescription
+            Analytics.shared.trackPresentationGenerationFailed(error: error.localizedDescription)
         }
 
         isGeneratingPresentation = false

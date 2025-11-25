@@ -58,7 +58,7 @@ struct SlideData: Codable, Identifiable {
     var id: Int { slideNumber }
     let slideNumber: Int
     let type: String
-    var title: String
+    var title: String?  // Optional since quote slides may not have titles
 
     // Existing fields for title and content slides
     var subtitle: String?

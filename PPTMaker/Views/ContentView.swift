@@ -14,6 +14,11 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
     @State private var previewURL: URL?
+    @State private var showLaunchPaywall = false
+    @State private var isCheckingPaywall = true
+    @State private var showLimitBadgePaywall = false
+    @State private var outlineUsageCount = 0
+    @State private var hasPremiumAccess = false
     @AppStorage("isDarkMode") private var isDarkMode = true
 
     // Dynamic colors based on theme
@@ -47,21 +52,27 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Step 1: Topic Input
-                        topicInputSection
+                if isCheckingPaywall {
+                    // Show loading while checking if paywall should be shown
+                    ProgressView()
+                        .scaleEffect(1.5)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Step 1: Topic Input
+                            topicInputSection
 
-                        // Step 2: Outline Generated - Edit and Template Selection
-                        if viewModel.presentationOutline != nil {
-                            outlineSection
-                            templateSelectionSection
-                            generateButtonSection
+                            // Step 2: Outline Generated - Edit and Template Selection
+                            if viewModel.presentationOutline != nil {
+                                outlineSection
+                                templateSelectionSection
+                                generateButtonSection
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 40)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("PPT Maker")
@@ -79,6 +90,18 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
                             .foregroundColor(isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255))
+                    }
+                }
+
+                // Limit Badge - only shown for non-premium users
+                if !hasPremiumAccess {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            HapticManager.shared.lightTap()
+                            showLimitBadgePaywall = true
+                        } label: {
+                            limitBadgeView
+                        }
                     }
                 }
 
@@ -110,6 +133,25 @@ struct ContentView: View {
             }
             .sheet(item: $previewURL) { url in
                 QuickLookPreview(url: url)
+            }
+            .fullScreenCover(isPresented: $viewModel.showPaywall) {
+                PaywallView(
+                    isLimitTriggered: viewModel.isPaywallLimitTriggered,
+                    hardPaywall: PaywallSettingsService.shared.getSettings().hardPaywall
+                )
+            }
+            .fullScreenCover(isPresented: $showLaunchPaywall) {
+                PaywallView(isLimitTriggered: false, hardPaywall: false)
+            }
+            .fullScreenCover(isPresented: $showLimitBadgePaywall) {
+                PaywallView(isLimitTriggered: true, hardPaywall: false)
+            }
+            .onAppear {
+                checkAndShowLaunchPaywall()
+                updateLimitStatus()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .outlineGenerated)) { _ in
+                updateLimitStatus()
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
@@ -157,7 +199,7 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .foregroundColor(Color.brandPrimary)
 
                     Text("Topic")
                         .font(.system(size: 18, weight: .semibold))
@@ -180,7 +222,7 @@ struct ContentView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2), lineWidth: 1)
+                                .strokeBorder(Color.brandPrimary.opacity(0.2), lineWidth: 1)
                         )
                         .disabled(viewModel.isGeneratingOutline)
                 }
@@ -198,7 +240,7 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "square.stack.3d.up.fill")
                         .font(.system(size: 15))
-                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .foregroundColor(Color.brandPrimary)
 
                     Text("Slides")
                         .font(.system(size: 17, weight: .semibold))
@@ -215,7 +257,7 @@ struct ContentView: View {
 
                         Text("\(viewModel.numSlides)")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                            .foregroundColor(Color.brandPrimary)
                     }
 
                     HStack(spacing: 10) {
@@ -226,11 +268,11 @@ struct ContentView: View {
                         Slider(value: Binding(
                             get: { Double(viewModel.numSlides) },
                             set: { viewModel.numSlides = Int($0) }
-                        ), in: 5...15, step: 1)
-                        .accentColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        ), in: 5...20, step: 1)
+                        .accentColor(Color.brandPrimary)
                         .disabled(viewModel.isGeneratingOutline)
 
-                        Text("15")
+                        Text("20")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(secondaryTextColor)
                     }
@@ -276,15 +318,15 @@ struct ContentView: View {
                     .background(
                         LinearGradient(
                             colors: [
-                                Color(red: 59/255, green: 130/255, blue: 246/255),
-                                Color(red: 99/255, green: 102/255, blue: 241/255)
+                                Color.brandPrimary,
+                                Color.brandLight
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
                     .cornerRadius(14)
-                    .shadow(color: Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.4), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color.brandPrimary.opacity(0.4), radius: 12, x: 0, y: 6)
                 }
                 .disabled(!viewModel.canGenerateOutline)
                 .opacity(viewModel.canGenerateOutline ? 1 : 0.5)
@@ -300,7 +342,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Image(systemName: "list.bullet.rectangle.fill")
                     .font(.system(size: 16))
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
 
                 Text("Outline")
                     .font(.system(size: 18, weight: .semibold))
@@ -342,10 +384,10 @@ struct ContentView: View {
                             Text("Edit Outline")
                         }
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                        .foregroundColor(Color.brandPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.12))
+                        .background(Color.brandPrimary.opacity(0.12))
                         .cornerRadius(14)
                     }
                 }
@@ -366,7 +408,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Image(systemName: "paintpalette.fill")
                     .font(.system(size: 16))
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
 
                 Text("Template")
                     .font(.system(size: 18, weight: .semibold))
@@ -443,7 +485,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Image(systemName: "waveform")
                     .font(.system(size: 15))
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
 
                 Text("Tone")
                     .font(.system(size: 17, weight: .semibold))
@@ -471,8 +513,8 @@ struct ContentView: View {
                                             .fill(viewModel.selectedTone == tone ?
                                                   LinearGradient(
                                                     colors: [
-                                                        Color(red: 59/255, green: 130/255, blue: 246/255),
-                                                        Color(red: 99/255, green: 102/255, blue: 241/255)
+                                                        Color.brandPrimary,
+                                                        Color.brandLight
                                                     ],
                                                     startPoint: .topLeading,
                                                     endPoint: .bottomTrailing
@@ -503,7 +545,7 @@ struct ContentView: View {
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(isDarkMode ? Color(red: 32/255, green: 36/255, blue: 48/255) : Color.white)
                                         .shadow(color: viewModel.selectedTone == tone ?
-                                                Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.3) :
+                                                Color.brandPrimary.opacity(0.3) :
                                                 Color.black.opacity(isDarkMode ? 0.2 : 0.05),
                                                 radius: viewModel.selectedTone == tone ? 5 : 2,
                                                 x: 0,
@@ -512,7 +554,7 @@ struct ContentView: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .strokeBorder(
                                                     viewModel.selectedTone == tone ?
-                                                    Color(red: 59/255, green: 130/255, blue: 246/255) :
+                                                    Color.brandPrimary :
                                                     Color.clear,
                                                     lineWidth: 1.5
                                                 )
@@ -539,7 +581,7 @@ struct ContentView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .strokeBorder(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.2), lineWidth: 1)
+                                    .strokeBorder(Color.brandPrimary.opacity(0.2), lineWidth: 1)
                             )
                             .disabled(viewModel.isGeneratingOutline)
                             .onChange(of: viewModel.customToneText) { newValue in
@@ -582,7 +624,7 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Image(systemName: "rectangle.stack.fill")
                     .font(.system(size: 15))
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
 
                 Text("Slide Types")
                     .font(.system(size: 17, weight: .semibold))
@@ -609,7 +651,7 @@ struct ContentView: View {
                                 HStack(spacing: 14) {
                                     Image(systemName: viewModel.selectedSlideTypes.contains(slideType) ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
-                                        .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? Color(red: 59/255, green: 130/255, blue: 246/255) : secondaryTextColor.opacity(0.4))
+                                        .foregroundColor(viewModel.selectedSlideTypes.contains(slideType) ? Color.brandPrimary : secondaryTextColor.opacity(0.4))
 
                                     Image(systemName: slideType.icon)
                                         .font(.system(size: 16))
@@ -631,7 +673,7 @@ struct ContentView: View {
                                             RoundedRectangle(cornerRadius: 14)
                                                 .strokeBorder(
                                                     viewModel.selectedSlideTypes.contains(slideType) ?
-                                                    Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.3) :
+                                                    Color.brandPrimary.opacity(0.3) :
                                                     Color.clear,
                                                     lineWidth: 1.5
                                                 )
@@ -660,7 +702,7 @@ struct ContentView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                            .foregroundColor(Color.brandPrimary)
 
                         Text("AI will intelligently choose the best slide types for your content")
                             .font(.system(size: 14))
@@ -671,7 +713,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.1))
+                            .fill(Color.brandPrimary.opacity(0.1))
                     )
                     .padding(.top, 6)
                 }
@@ -690,6 +732,33 @@ struct ContentView: View {
             viewModel.selectedSlideTypes.remove(type)
         } else {
             viewModel.selectedSlideTypes.insert(type)
+        }
+    }
+
+    private func checkAndShowLaunchPaywall() {
+        // Don't show if already shown in this session
+        guard !showLaunchPaywall else {
+            print("[Paywall] Already shown in this session")
+            isCheckingPaywall = false
+            return
+        }
+
+        // Check premium status and show paywall if not subscribed
+        Task {
+            let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
+            print("[Paywall] Checking at launch - Has premium: \(hasPremium)")
+
+            await MainActor.run {
+                if !hasPremium {
+                    // Show paywall immediately for non-subscribers
+                    print("[Paywall] Showing launch paywall (not subscribed)...")
+                    showLaunchPaywall = true
+                } else {
+                    print("[Paywall] Not showing - User has premium access")
+                }
+                // Done checking, show content
+                isCheckingPaywall = false
+            }
         }
     }
 
@@ -721,15 +790,15 @@ struct ContentView: View {
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 59/255, green: 130/255, blue: 246/255),
-                            Color(red: 99/255, green: 102/255, blue: 241/255)
+                            Color.brandPrimary,
+                            Color.brandLight
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
                 .cornerRadius(14)
-                .shadow(color: Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.4), radius: 12, x: 0, y: 6)
+                .shadow(color: Color.brandPrimary.opacity(0.4), radius: 12, x: 0, y: 6)
             }
             .disabled(!viewModel.canGeneratePresentation)
             .opacity(viewModel.canGeneratePresentation ? 1 : 0.5)
@@ -752,11 +821,91 @@ struct ContentView: View {
             }
         }
     }
+
+    // MARK: - Limit Badge View
+    private var limitBadgeView: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(badgeTextColor)
+
+            Text("\(outlineUsageCount)/\(PaywallSettingsService.shared.getSettings().outlineLimit)")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(badgeTextColor)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(badgeBackgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(badgeBorderColor, lineWidth: 1)
+                )
+        )
+    }
+
+    private var badgeTextColor: Color {
+        let limit = PaywallSettingsService.shared.getSettings().outlineLimit
+        let remainingPercent = Double(limit - outlineUsageCount) / Double(limit)
+
+        if remainingPercent > 0.5 {
+            return Color(red: 34/255, green: 197/255, blue: 94/255) // Green
+        } else if remainingPercent > 0 {
+            return Color(red: 251/255, green: 146/255, blue: 60/255) // Orange
+        } else {
+            return Color.red // Red when limit reached
+        }
+    }
+
+    private var badgeBackgroundColor: Color {
+        let limit = PaywallSettingsService.shared.getSettings().outlineLimit
+        let remainingPercent = Double(limit - outlineUsageCount) / Double(limit)
+
+        if remainingPercent > 0.5 {
+            return Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.12)
+        } else if remainingPercent > 0 {
+            return Color(red: 251/255, green: 146/255, blue: 60/255).opacity(0.12)
+        } else {
+            return Color.red.opacity(0.12)
+        }
+    }
+
+    private var badgeBorderColor: Color {
+        let limit = PaywallSettingsService.shared.getSettings().outlineLimit
+        let remainingPercent = Double(limit - outlineUsageCount) / Double(limit)
+
+        if remainingPercent > 0.5 {
+            return Color(red: 34/255, green: 197/255, blue: 94/255).opacity(0.3)
+        } else if remainingPercent > 0 {
+            return Color(red: 251/255, green: 146/255, blue: 60/255).opacity(0.3)
+        } else {
+            return Color.red.opacity(0.3)
+        }
+    }
+
+    // MARK: - Helper Methods
+    private func updateLimitStatus() {
+        Task {
+            let premium = await RevenueCatService.shared.hasPremiumAccess()
+            let count = LimitTrackingService.shared.getOutlineCount()
+
+            await MainActor.run {
+                hasPremiumAccess = premium
+                outlineUsageCount = count
+            }
+        }
+    }
 }
 
 // MARK: - URL Identifiable Extension
 extension URL: Identifiable {
     public var id: String { absoluteString }
+}
+
+// MARK: - Notification Name Extension
+extension Notification.Name {
+    static let outlineGenerated = Notification.Name("outlineGenerated")
 }
 
 // MARK: - Share Sheet

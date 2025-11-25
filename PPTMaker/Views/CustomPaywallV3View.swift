@@ -401,7 +401,8 @@ class PaywallV3ViewModel: ObservableObject {
                 isPurchasing = false
 
                 if !result.customerInfo.entitlements.active.isEmpty {
-                    // Success - dismiss paywall
+                    // Success - request review and dismiss paywall
+                    ReviewManager.shared.requestReviewAfterPurchase()
                     onSuccess()
                 }
             } catch {

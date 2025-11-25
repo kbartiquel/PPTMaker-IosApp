@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		42C0148E2ED02159005D273B /* Aptabase in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0148D2ED02159005D273B /* Aptabase */; };
+		42C0149D2ED4B37D005D273B /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0149C2ED4B37D005D273B /* RevenueCatUI */; };
+		42C0149F2ED4B383005D273B /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0149E2ED4B383005D273B /* RevenueCat */; };
+
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		42F981F22ECD7E2200D5EE31 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +34,7 @@
 		42F981E22ECD7E2000D5EE31 /* PPTMaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PPTMaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42F981F12ECD7E2200D5EE31 /* PPTMakerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PPTMakerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42F981FB2ECD7E2200D5EE31 /* PPTMakerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PPTMakerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +60,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42C0149D2ED4B37D005D273B /* RevenueCatUI in Frameworks */,
+				42C0148E2ED02159005D273B /* Aptabase in Frameworks */,
+				42C0149F2ED4B383005D273B /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +83,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		42C0148C2ED02159005D273B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		42F981D92ECD7E2000D5EE31 = {
 			isa = PBXGroup;
 			children = (
 				42F981E42ECD7E2000D5EE31 /* PPTMaker */,
 				42F981F42ECD7E2200D5EE31 /* PPTMakerTests */,
 				42F981FE2ECD7E2200D5EE31 /* PPTMakerUITests */,
+				42C0148C2ED02159005D273B /* Frameworks */,
 				42F981E32ECD7E2000D5EE31 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,6 +131,9 @@
 			);
 			name = PPTMaker;
 			packageProductDependencies = (
+				42C0148D2ED02159005D273B /* Aptabase */,
+				42C0149C2ED4B37D005D273B /* RevenueCatUI */,
+				42C0149E2ED4B383005D273B /* RevenueCat */,
 			);
 			productName = PPTMaker;
 			productReference = 42F981E22ECD7E2000D5EE31 /* PPTMaker.app */;
@@ -195,6 +217,10 @@
 			);
 			mainGroup = 42F981D92ECD7E2000D5EE31;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				42C0148B2ED020D2005D273B /* XCRemoteSwiftPackageReference "aptabase-swift" */,
+				42C0149B2ED4B292005D273B /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 42F981E32ECD7E2000D5EE31 /* Products */;
 			projectDirPath = "";
@@ -623,6 +649,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		42C0148B2ED020D2005D273B /* XCRemoteSwiftPackageReference "aptabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/aptabase/aptabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.11;
+			};
+		};
+		42C0149B2ED4B292005D273B /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.49.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		42C0148D2ED02159005D273B /* Aptabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42C0148B2ED020D2005D273B /* XCRemoteSwiftPackageReference "aptabase-swift" */;
+			productName = Aptabase;
+		};
+		42C0149C2ED4B37D005D273B /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42C0149B2ED4B292005D273B /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+		42C0149E2ED4B383005D273B /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 42C0149B2ED4B292005D273B /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 42F981DA2ECD7E2000D5EE31 /* Project object */;
 }

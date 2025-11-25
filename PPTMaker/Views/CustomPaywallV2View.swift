@@ -33,7 +33,7 @@ struct CustomPaywallV2View: View {
             }
 
             // Close button
-            if !hardPaywall {
+            if !hardPaywall && !viewModel.isLoading{
                 VStack {
                     HStack {
                         Spacer()
@@ -503,7 +503,8 @@ class PaywallV2ViewModel: ObservableObject {
                 isPurchasing = false
 
                 if !result.customerInfo.entitlements.active.isEmpty {
-                    // Success - dismiss paywall
+                    // Success - request review and dismiss paywall
+                    ReviewManager.shared.requestReviewAfterPurchase()
                     onSuccess()
                 }
             } catch {

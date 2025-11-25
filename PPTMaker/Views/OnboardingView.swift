@@ -10,6 +10,7 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var isPresented: Bool
     @State private var currentPage = 0
+    @State private var showPaywall = false
     @AppStorage("isDarkMode") private var isDarkMode = true
 
     // Dynamic colors based on theme
@@ -32,37 +33,37 @@ struct OnboardingView: View {
     let pages: [OnboardingPage] = [
         OnboardingPage(
             icon: "wand.and.stars",
-            iconColor: Color(red: 99/255, green: 102/255, blue: 241/255),
+            iconColor: Color.brandLight,
             title: "Create Stunning Presentations in Seconds",
             description: "Just enter a topic and let AI craft a complete, professional presentation for you",
             features: [
-                Feature(icon: "brain", text: "Powered by advanced AI", color: Color(red: 99/255, green: 102/255, blue: 241/255)),
-                Feature(icon: "clock", text: "Ready in seconds", color: Color(red: 168/255, green: 85/255, blue: 247/255)),
-                Feature(icon: "star.fill", text: "Professional quality", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+                Feature(icon: "brain", text: "Powered by advanced AI", color: Color.brandLight),
+                Feature(icon: "clock", text: "Ready in seconds", color: Color.brandPrimary),
+                Feature(icon: "star.fill", text: "Professional quality", color: Color.brandPrimary)
             ],
             visualType: .animated
         ),
         OnboardingPage(
             icon: "slider.horizontal.3",
-            iconColor: Color(red: 59/255, green: 130/255, blue: 246/255),
+            iconColor: Color.brandPrimary,
             title: "Control Your Presentation Style",
             description: "Choose between Dynamic AI or customize which slide types to use",
             features: [
-                Feature(icon: "sparkles", text: "Dynamic: AI picks the best mix", color: Color(red: 59/255, green: 130/255, blue: 246/255)),
-                Feature(icon: "checkmark.circle", text: "Custom: You choose slide types", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
-                Feature(icon: "list.bullet", text: "Quotes, columns, sections & more", color: Color(red: 168/255, green: 85/255, blue: 247/255))
+                Feature(icon: "sparkles", text: "Dynamic: AI picks the best mix", color: Color.brandPrimary),
+                Feature(icon: "checkmark.circle", text: "Custom: You choose slide types", color: Color.brandPrimary),
+                Feature(icon: "list.bullet", text: "Quotes, columns, sections & more", color: Color.brandPrimary)
             ],
             visualType: .slideTypes
         ),
         OnboardingPage(
             icon: "pencil.and.list.clipboard",
-            iconColor: Color(red: 139/255, green: 92/255, blue: 246/255),
+            iconColor: Color.brandPrimary,
             title: "Edit Every Detail",
             description: "Fine-tune your presentation before generating the final file",
             features: [
-                Feature(icon: "text.cursor", text: "Edit titles and content", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
-                Feature(icon: "arrow.up.arrow.down", text: "Reorder slides", color: Color(red: 168/255, green: 85/255, blue: 247/255)),
-                Feature(icon: "plus.circle", text: "Add or remove slides", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+                Feature(icon: "text.cursor", text: "Edit titles and content", color: Color.brandPrimary),
+                Feature(icon: "arrow.up.arrow.down", text: "Reorder slides", color: Color.brandPrimary),
+                Feature(icon: "plus.circle", text: "Add or remove slides", color: Color.brandPrimary)
             ],
             visualType: .standard
         ),
@@ -72,9 +73,9 @@ struct OnboardingView: View {
             title: "Beautiful Templates",
             description: "Choose from professionally designed templates that match your style",
             features: [
-                Feature(icon: "briefcase.fill", text: "Corporate & Business", color: Color(red: 59/255, green: 130/255, blue: 246/255)),
-                Feature(icon: "graduationcap.fill", text: "Academic & Educational", color: Color(red: 139/255, green: 92/255, blue: 246/255)),
-                Feature(icon: "sparkles", text: "Modern & Creative", color: Color(red: 236/255, green: 72/255, blue: 153/255))
+                Feature(icon: "briefcase.fill", text: "Corporate & Business", color: Color.brandPrimary),
+                Feature(icon: "graduationcap.fill", text: "Academic & Educational", color: Color.brandPrimary),
+                Feature(icon: "sparkles", text: "Modern & Creative", color: Color.brandPrimary)
             ],
             visualType: .templates
         ),
@@ -121,6 +122,12 @@ struct OnboardingView: View {
             }
         }
         .preferredColorScheme(isDarkMode ? .dark : .light)
+        .fullScreenCover(isPresented: $showPaywall, onDismiss: {
+            // Dismiss onboarding when paywall is dismissed
+            isPresented = false
+        }) {
+            PaywallView(isLimitTriggered: false, hardPaywall: false)
+        }
     }
 
     private var bottomButton: some View {
@@ -139,7 +146,7 @@ struct OnboardingView: View {
                 .foregroundColor(isDarkMode ? .white : .white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color(red: 59/255, green: 130/255, blue: 246/255))
+                .background(Color.brandPrimary)
                 .cornerRadius(12)
         }
     }
@@ -147,7 +154,21 @@ struct OnboardingView: View {
     private func completeOnboarding() {
         HapticManager.shared.success()
         UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
-        isPresented = false
+
+        // Show paywall after onboarding if not subscribed
+        Task {
+            let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
+
+            await MainActor.run {
+                if !hasPremium {
+                    // Show paywall immediately before dismissing onboarding
+                    showPaywall = true
+                } else {
+                    // Dismiss onboarding only if user has premium
+                    isPresented = false
+                }
+            }
+        }
     }
 }
 
@@ -320,8 +341,8 @@ struct FeatureRow: View {
 struct SlideTypeVisual: View {
     var body: some View {
         HStack(spacing: 12) {
-            SlideTypeBadge(icon: "list.bullet", label: "Content", color: Color(red: 59/255, green: 130/255, blue: 246/255))
-            SlideTypeBadge(icon: "quote.bubble", label: "Quote", color: Color(red: 139/255, green: 92/255, blue: 246/255))
+            SlideTypeBadge(icon: "list.bullet", label: "Content", color: Color.brandPrimary)
+            SlideTypeBadge(icon: "quote.bubble", label: "Quote", color: Color.brandPrimary)
             SlideTypeBadge(icon: "rectangle.split.2x1", label: "Columns", color: Color(red: 16/255, green: 185/255, blue: 129/255))
         }
         .padding(.horizontal, 32)
@@ -357,9 +378,9 @@ struct SlideTypeBadge: View {
 struct TemplatePreviewVisual: View {
     var body: some View {
         HStack(spacing: 10) {
-            TemplateCard(color: Color(red: 59/255, green: 130/255, blue: 246/255))
-            TemplateCard(color: Color(red: 139/255, green: 92/255, blue: 246/255))
-            TemplateCard(color: Color(red: 236/255, green: 72/255, blue: 153/255))
+            TemplateCard(color: Color.brandPrimary)
+            TemplateCard(color: Color.brandPrimary)
+            TemplateCard(color: Color.brandPrimary)
         }
         .padding(.horizontal, 40)
     }

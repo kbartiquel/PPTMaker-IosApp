@@ -65,7 +65,7 @@ struct TemplateSelectionView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                    .foregroundColor(Color.brandPrimary)
                     .fontWeight(.semibold)
                 }
             }
@@ -107,7 +107,7 @@ struct TemplatePreviewCard: View {
 
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                            .foregroundColor(Color.brandPrimary)
                             .font(.system(size: 24))
                     }
                 }
@@ -119,7 +119,7 @@ struct TemplatePreviewCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color(red: 59/255, green: 130/255, blue: 246/255) : Color.clear, lineWidth: 2)
+                .stroke(isSelected ? Color.brandPrimary : Color.clear, lineWidth: 2)
         )
     }
 }

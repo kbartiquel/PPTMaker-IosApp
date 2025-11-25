@@ -1,0 +1,24 @@
+{
+  "originHash" : "3c2b3aa21bc9d93430271124033007cbcb6e7871a166f0c406952369053fcb71",
+  "pins" : [
+    {
+      "identity" : "aptabase-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/aptabase/aptabase-swift",
+      "state" : {
+        "revision" : "cfd67fac2a228d448d9d2ac92ffc71589cc3ef00",
+        "version" : "0.3.11"
+      }
+    },
+    {
+      "identity" : "purchases-ios-spm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RevenueCat/purchases-ios-spm.git",
+      "state" : {
+        "revision" : "2ae461666d96399aaab0207c6a941d8c130b1783",
+        "version" : "5.49.0"
+      }
+    }
+  ],
+  "version" : 3
+}

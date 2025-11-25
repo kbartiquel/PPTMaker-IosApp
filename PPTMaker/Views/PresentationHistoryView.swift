@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import QuickLook
 
 struct PresentationHistoryView: View {
     @ObservedObject var viewModel: PresentationViewModel
@@ -130,7 +131,7 @@ struct PresentationHistoryView: View {
                         } label: {
                             Label("Edit & Regenerate", systemImage: "pencil.circle")
                         }
-                        .tint(.blue)
+                        .tint(Color.brandPrimary)
                     }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -146,7 +147,7 @@ struct PresentationHistoryView: View {
                     } label: {
                         Label("Share", systemImage: "square.and.arrow.up")
                     }
-                    .tint(.blue)
+                    .tint(Color.brandPrimary)
                 }
             }
         }
@@ -220,9 +221,9 @@ struct PresentationRow: View {
             // Icon
             Image(systemName: "doc.richtext.fill")
                 .font(.system(size: 24))
-                .foregroundColor(Color(red: 59/255, green: 130/255, blue: 246/255))
+                .foregroundColor(Color.brandPrimary)
                 .frame(width: 50, height: 50)
-                .background(Color(red: 59/255, green: 130/255, blue: 246/255).opacity(0.15))
+                .background(Color.brandPrimary.opacity(0.15))
                 .cornerRadius(10)
 
             // Info
