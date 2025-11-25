@@ -10,7 +10,6 @@
 		42C0148E2ED02159005D273B /* Aptabase in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0148D2ED02159005D273B /* Aptabase */; };
 		42C0149D2ED4B37D005D273B /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0149C2ED4B37D005D273B /* RevenueCatUI */; };
 		42C0149F2ED4B383005D273B /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 42C0149E2ED4B383005D273B /* RevenueCat */; };
-
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,7 +33,6 @@
 		42F981E22ECD7E2000D5EE31 /* PPTMaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PPTMaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		42F981F12ECD7E2200D5EE31 /* PPTMakerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PPTMakerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42F981FB2ECD7E2200D5EE31 /* PPTMakerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PPTMakerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -424,6 +422,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "PPT Maker";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -472,6 +471,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "PPT Maker";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

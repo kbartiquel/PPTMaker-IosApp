@@ -42,8 +42,9 @@ struct CustomPaywallV1View: View {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 20))
                                     .foregroundColor(.gray)
-                                    .padding()
+                                    .frame(width: 32, height: 32)
                             }
+                            .padding()
                         } else {
                             ZStack {
                                 Circle()
