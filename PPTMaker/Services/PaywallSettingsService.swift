@@ -24,6 +24,7 @@ struct PaywallSettings: Codable {
     // Custom Paywall V2 Plan Visibility
     let custompaywallv2Monthly: Bool
     let custompaywallv2Weekly: Bool
+    let custompaywallv2HideTrial: Bool
 
     enum CodingKeys: String, CodingKey {
         case presentationLimit
@@ -36,6 +37,7 @@ struct PaywallSettings: Codable {
         case showPaywallOnStart
         case custompaywallv2Monthly
         case custompaywallv2Weekly
+        case custompaywallv2HideTrial
     }
 }
 
@@ -142,7 +144,8 @@ final class PaywallSettingsService {
             paywallCloseButtonDelayOnLimit: 35,
             showPaywallOnStart: false,
             custompaywallv2Monthly: true,
-            custompaywallv2Weekly: true
+            custompaywallv2Weekly: true,
+            custompaywallv2HideTrial: false
         )
     }
 }

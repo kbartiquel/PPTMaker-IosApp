@@ -634,7 +634,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 12) {
                 // Mode Picker (Dynamic vs Custom)
                 Picker("", selection: $viewModel.slideTypeMode) {
-                    Text("Dynamic (AI chooses)").tag(SlideTypeMode.dynamic)
+                    Text("Dynamic (Auto)").tag(SlideTypeMode.dynamic)
                     Text("Custom Selection").tag(SlideTypeMode.custom)
                 }
                 .pickerStyle(.segmented)
@@ -704,7 +704,7 @@ struct ContentView: View {
                             .font(.system(size: 16))
                             .foregroundColor(Color.brandPrimary)
 
-                        Text("AI will intelligently choose the best slide types for your content")
+                        Text("Automatically selects the best slide types for your content")
                             .font(.system(size: 14))
                             .foregroundColor(secondaryTextColor)
                             .lineLimit(2)

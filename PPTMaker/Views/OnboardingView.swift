@@ -35,9 +35,9 @@ struct OnboardingView: View {
             icon: "wand.and.stars",
             iconColor: Color.brandLight,
             title: "Create Stunning Presentations in Seconds",
-            description: "Just enter a topic and let AI craft a complete, professional presentation for you",
+            description: "Just enter a topic and get a complete, professional presentation instantly",
             features: [
-                Feature(icon: "brain", text: "Powered by advanced AI", color: Color.brandLight),
+                Feature(icon: "brain", text: "Instant professional content", color: Color.brandLight),
                 Feature(icon: "clock", text: "Ready in seconds", color: Color.brandPrimary),
                 Feature(icon: "star.fill", text: "Professional quality", color: Color.brandPrimary)
             ],
@@ -47,9 +47,9 @@ struct OnboardingView: View {
             icon: "slider.horizontal.3",
             iconColor: Color.brandPrimary,
             title: "Control Your Presentation Style",
-            description: "Choose between Dynamic AI or customize which slide types to use",
+            description: "Choose between Dynamic mode or customize which slide types to use",
             features: [
-                Feature(icon: "sparkles", text: "Dynamic: AI picks the best mix", color: Color.brandPrimary),
+                Feature(icon: "sparkles", text: "Dynamic: Auto-picks the best mix", color: Color.brandPrimary),
                 Feature(icon: "checkmark.circle", text: "Custom: You choose slide types", color: Color.brandPrimary),
                 Feature(icon: "list.bullet", text: "Quotes, columns, sections & more", color: Color.brandPrimary)
             ],

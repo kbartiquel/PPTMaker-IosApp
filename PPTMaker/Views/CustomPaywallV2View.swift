@@ -117,9 +117,13 @@ struct CustomPaywallV2View: View {
             // Bottom Section with Plans
             VStack(spacing: 16) {
                 // Plan Options
+                let settings = PaywallSettingsService.shared.getSettings()
+                let hideTrial = settings.custompaywallv2HideTrial
+
                 if let lifetimePackage = viewModel.lifetimePackage {
                     planOption(
                         title: "Lifetime Plan",
+                        subtitle: "Pay Once, Use Forever",
                         price: lifetimePackage.storeProduct.localizedPriceString,
                         badge: "Best Value",
                         isSelected: viewModel.selectedPlan == "lifetime",
@@ -131,16 +135,14 @@ struct CustomPaywallV2View: View {
                 }
 
                 // Monthly Package (conditionally shown)
-                let settings = PaywallSettingsService.shared.getSettings()
                 if let monthlyPackage = viewModel.monthlyPackage, settings.custompaywallv2Monthly {
-                    let hasMonthlyTrial = monthlyPackage.storeProduct.introductoryDiscount != nil
+                    let hasMonthlyTrial = monthlyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
                     planOption(
                         title: hasMonthlyTrial ? "3-Day Free Trial" : "Monthly Plan",
-                        subtitle: hasMonthlyTrial ? "Then \(monthlyPackage.storeProduct.localizedPriceString) per month" :
-                           "\(monthlyPackage.storeProduct.localizedPriceString) per month",
-                        price: hasMonthlyTrial ? "FREE" : monthlyPackage.storeProduct.localizedPriceString,
+                        subtitle: hasMonthlyTrial ? "Then \(monthlyPackage.storeProduct.localizedPriceString) per month" : (hideTrial ? "Billed monthly, cancel anytime" : nil),
+                        price: monthlyPackage.storeProduct.localizedPriceString,
+                        badge: hasMonthlyTrial ? "FREE" : nil,
                         isSelected: viewModel.selectedPlan == "monthly",
-                        showCheckmark: hasMonthlyTrial,
                         onTap: {
                             viewModel.selectedPlan = "monthly"
                             if hasMonthlyTrial {
@@ -152,13 +154,13 @@ struct CustomPaywallV2View: View {
 
                 // Weekly Package (conditionally shown)
                 if let weeklyPackage = viewModel.weeklyPackage, settings.custompaywallv2Weekly {
-                    let hasWeeklyTrial = weeklyPackage.storeProduct.introductoryDiscount != nil
+                    let hasWeeklyTrial = weeklyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
                     planOption(
                         title: hasWeeklyTrial ? "3-Day Free Trial" : "Weekly Plan",
-                        subtitle: hasWeeklyTrial ? "Then \(weeklyPackage.storeProduct.localizedPriceString) per week" : nil,
-                        price: hasWeeklyTrial ? "FREE" : weeklyPackage.storeProduct.localizedPriceString,
+                        subtitle: hasWeeklyTrial ? "Then \(weeklyPackage.storeProduct.localizedPriceString) per week" : (hideTrial ? "Billed weekly, cancel anytime" : nil),
+                        price: weeklyPackage.storeProduct.localizedPriceString,
+                        badge: hasWeeklyTrial ? "FREE" : nil,
                         isSelected: viewModel.selectedPlan == "weekly",
-                        showCheckmark: hasWeeklyTrial,
                         onTap: {
                             viewModel.selectedPlan = "weekly"
                             if hasWeeklyTrial {
@@ -168,8 +170,8 @@ struct CustomPaywallV2View: View {
                     )
                 }
 
-                // Free Trial Toggle
-                if viewModel.hasAnyTrial {
+                // Free Trial Toggle (hidden when hideTrial setting is enabled)
+                if viewModel.hasAnyTrial && !hideTrial {
                     Toggle(isOn: $viewModel.trialEnabled) {
                         Text("Free Trial Enabled")
                             .font(.system(size: 16, weight: .semibold))
@@ -182,15 +184,6 @@ struct CustomPaywallV2View: View {
                     .onChange(of: viewModel.trialEnabled) { newValue in
                         viewModel.handleTrialToggle(enabled: newValue)
                     }
-
-//                    // No payment today text
-//                    if viewModel.trialEnabled && viewModel.hasOnlyOneTrial {
-//                        Text("No payment required today")
-//                            .font(.system(size: 14, weight: .semibold))
-//                            .foregroundColor(.gray)
-//                    } else {
-//                        Spacer().frame(height: 20)
-//                    }
                 }
 
                 // Purchase Button
@@ -271,16 +264,17 @@ struct CustomPaywallV2View: View {
         onTap: @escaping () -> Void
     ) -> some View {
         Button(action: onTap) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 12) {
+                // Left side: Title and subtitle
+                VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.black)
 
                     if let subtitle = subtitle {
                         Text(subtitle)
-                            .font(.system(size: 14))
-                            .foregroundColor(.black)
+                            .font(.system(size: 13))
+                            .foregroundColor(.gray)
                     } else if !showCheckmark {
                         Text(price)
                             .font(.system(size: 14))
@@ -290,39 +284,29 @@ struct CustomPaywallV2View: View {
 
                 Spacer()
 
-                if let badge = badge {
-                    Text(badge)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.red)
-                        .cornerRadius(6)
-                }
+                // Right side: Price, Radio button
+                HStack(spacing: 8) {
+                    // Show price on the right when there's a subtitle (hideTrial mode) or showCheckmark (trial mode)
+                    if subtitle != nil || showCheckmark {
+                        Text(price)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.black)
+                    }
 
-                if showCheckmark {
-                    Text(price)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.black.opacity(0.7))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.brandPrimary.opacity(0.1))
-                        .cornerRadius(4)
-                }
-
-                ZStack {
-                    Circle()
-                        .stroke(isSelected ? Color.brandPrimary : Color.gray.opacity(0.3), lineWidth: 2)
-                        .frame(width: 24, height: 24)
-
-                    if isSelected {
+                    ZStack {
                         Circle()
-                            .fill(Color.brandPrimary)
+                            .stroke(isSelected ? Color.brandPrimary : Color.gray.opacity(0.3), lineWidth: 2)
                             .frame(width: 24, height: 24)
 
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
+                        if isSelected {
+                            Circle()
+                                .fill(Color.brandPrimary)
+                                .frame(width: 24, height: 24)
+
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
                     }
                 }
             }
@@ -333,6 +317,19 @@ struct CustomPaywallV2View: View {
                     .stroke(isSelected ? Color.brandPrimary : Color.gray.opacity(0.3), lineWidth: 2)
             )
             .cornerRadius(12)
+            .overlay(alignment: .topTrailing) {
+                // Badge half-in half-out at top right
+                if let badge = badge {
+                    Text(badge)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(badge == "FREE" ? Color.green : Color.red)
+                        .cornerRadius(4)
+                        .offset(x: -12, y: -10)
+                }
+            }
         }
     }
 }
@@ -472,9 +469,12 @@ class PaywallV2ViewModel: ObservableObject {
     }
 
     func getButtonText() -> String {
+        let settings = PaywallSettingsService.shared.getSettings()
+        let hideTrial = settings.custompaywallv2HideTrial
+
         if selectedPlan == "lifetime" {
             return "Get Lifetime Access"
-        } else if trialEnabled &&
+        } else if !hideTrial && trialEnabled &&
                   (monthlyPackage?.storeProduct.introductoryDiscount != nil ||
                    weeklyPackage?.storeProduct.introductoryDiscount != nil) {
             return "Try 3 Days Free"
