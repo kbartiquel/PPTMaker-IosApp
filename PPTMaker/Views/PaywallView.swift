@@ -2,7 +2,7 @@
 //  PaywallView.swift
 //  PPTMaker
 //
-//  Paywall router - decides which paywall version to show based on settings
+//  Paywall router - decides which paywall to show based on settings
 //
 
 import SwiftUI
@@ -23,30 +23,11 @@ struct PaywallView: View {
 
         // Choose which paywall to show based on settings
         if settings.customPaywall {
-            // Show custom paywall based on version
-            switch settings.customPaywallVersion {
-            case 1:
-                CustomPaywallV1View(
-                    isLimitTriggered: isLimitTriggered,
-                    hardPaywall: hardPaywall
-                )
-            case 2:
-                CustomPaywallV2View(
-                    isLimitTriggered: isLimitTriggered,
-                    hardPaywall: hardPaywall
-                )
-            case 3:
-                CustomPaywallV3View(
-                    isLimitTriggered: isLimitTriggered,
-                    hardPaywall: hardPaywall
-                )
-            default:
-                // Default to V1
-                CustomPaywallV1View(
-                    isLimitTriggered: isLimitTriggered,
-                    hardPaywall: hardPaywall
-                )
-            }
+            // Show custom paywall
+            CustomPaywallView(
+                isLimitTriggered: isLimitTriggered,
+                hardPaywall: hardPaywall
+            )
         } else {
             // Show RevenueCat dynamic paywall
             RevenueCatPaywallView(

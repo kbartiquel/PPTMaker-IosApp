@@ -1,17 +1,17 @@
 //
-//  CustomPaywallV2View.swift
+//  CustomPaywallView.swift
 //  PPTMaker
 //
-//  Custom paywall screen V2 - With free trial toggle
+//  Custom paywall screen with free trial toggle
 //
 
 import SwiftUI
 import Combine
 import RevenueCat
 
-struct CustomPaywallV2View: View {
+struct CustomPaywallView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = PaywallV2ViewModel()
+    @StateObject private var viewModel = PaywallViewModel()
 
     let isLimitTriggered: Bool
     let hardPaywall: Bool
@@ -118,24 +118,42 @@ struct CustomPaywallV2View: View {
             VStack(spacing: 16) {
                 // Plan Options
                 let settings = PaywallSettingsService.shared.getSettings()
-                let hideTrial = settings.custompaywallv2HideTrial
+                let hideTrial = settings.paywallHideTrial
+                let showYearly = settings.paywallYearly
 
-                if let lifetimePackage = viewModel.lifetimePackage {
-                    planOption(
-                        title: "Lifetime Plan",
-                        subtitle: "Pay Once, Use Forever",
-                        price: lifetimePackage.storeProduct.localizedPriceString,
-                        badge: "Best Value",
-                        isSelected: viewModel.selectedPlan == "lifetime",
-                        onTap: {
-                            viewModel.selectedPlan = "lifetime"
-                            viewModel.trialEnabled = false
-                        }
-                    )
+                // Show Yearly Plan if setting enabled, otherwise show Lifetime
+                if showYearly {
+                    if let yearlyPackage = viewModel.yearlyPackage {
+                        planOption(
+                            title: "Yearly Plan",
+                            subtitle: "Billed yearly, cancel anytime",
+                            price: yearlyPackage.storeProduct.localizedPriceString,
+                            badge: "Best Value",
+                            isSelected: viewModel.selectedPlan == "yearly",
+                            onTap: {
+                                viewModel.selectedPlan = "yearly"
+                                viewModel.trialEnabled = false
+                            }
+                        )
+                    }
+                } else {
+                    if let lifetimePackage = viewModel.lifetimePackage {
+                        planOption(
+                            title: "Lifetime Plan",
+                            subtitle: "Pay Once, Use Forever",
+                            price: lifetimePackage.storeProduct.localizedPriceString,
+                            badge: "Best Value",
+                            isSelected: viewModel.selectedPlan == "lifetime",
+                            onTap: {
+                                viewModel.selectedPlan = "lifetime"
+                                viewModel.trialEnabled = false
+                            }
+                        )
+                    }
                 }
 
                 // Monthly Package (conditionally shown)
-                if let monthlyPackage = viewModel.monthlyPackage, settings.custompaywallv2Monthly {
+                if let monthlyPackage = viewModel.monthlyPackage, settings.paywallMonthly {
                     let hasMonthlyTrial = monthlyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
                     planOption(
                         title: hasMonthlyTrial ? "3-Day Free Trial" : "Monthly Plan",
@@ -143,6 +161,7 @@ struct CustomPaywallV2View: View {
                         price: monthlyPackage.storeProduct.localizedPriceString,
                         badge: hasMonthlyTrial ? "FREE" : nil,
                         isSelected: viewModel.selectedPlan == "monthly",
+                        hideRightPrice: hasMonthlyTrial,
                         onTap: {
                             viewModel.selectedPlan = "monthly"
                             if hasMonthlyTrial {
@@ -153,7 +172,7 @@ struct CustomPaywallV2View: View {
                 }
 
                 // Weekly Package (conditionally shown)
-                if let weeklyPackage = viewModel.weeklyPackage, settings.custompaywallv2Weekly {
+                if let weeklyPackage = viewModel.weeklyPackage, settings.paywallWeekly {
                     let hasWeeklyTrial = weeklyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
                     planOption(
                         title: hasWeeklyTrial ? "3-Day Free Trial" : "Weekly Plan",
@@ -161,6 +180,7 @@ struct CustomPaywallV2View: View {
                         price: weeklyPackage.storeProduct.localizedPriceString,
                         badge: hasWeeklyTrial ? "FREE" : nil,
                         isSelected: viewModel.selectedPlan == "weekly",
+                        hideRightPrice: hasWeeklyTrial,
                         onTap: {
                             viewModel.selectedPlan = "weekly"
                             if hasWeeklyTrial {
@@ -261,6 +281,7 @@ struct CustomPaywallV2View: View {
         badge: String? = nil,
         isSelected: Bool,
         showCheckmark: Bool = false,
+        hideRightPrice: Bool = false,
         onTap: @escaping () -> Void
     ) -> some View {
         Button(action: onTap) {
@@ -286,8 +307,8 @@ struct CustomPaywallV2View: View {
 
                 // Right side: Price, Radio button
                 HStack(spacing: 8) {
-                    // Show price on the right when there's a subtitle (hideTrial mode) or showCheckmark (trial mode)
-                    if subtitle != nil || showCheckmark {
+                    // Show price on the right when there's a subtitle, unless hideRightPrice is true (for trial plans)
+                    if (subtitle != nil || showCheckmark) && !hideRightPrice {
                         Text(price)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.black)
@@ -336,12 +357,16 @@ struct CustomPaywallV2View: View {
 
 // MARK: - View Model
 @MainActor
-class PaywallV2ViewModel: ObservableObject {
+class PaywallViewModel: ObservableObject {
     @Published var offering: Offering?
     @Published var lifetimePackage: Package?
+    @Published var yearlyPackage: Package?
     @Published var monthlyPackage: Package?
     @Published var weeklyPackage: Package?
-    @Published var selectedPlan = "lifetime"
+    @Published var selectedPlan: String = {
+        let settings = PaywallSettingsService.shared.getSettings()
+        return settings.paywallYearly ? "yearly" : "lifetime"
+    }()
     @Published var trialEnabled = false
     @Published var isLoading = true
     @Published var isPurchasing = false
@@ -365,10 +390,10 @@ class PaywallV2ViewModel: ObservableObject {
     var hasOnlyOneTrial: Bool {
         let settings = PaywallSettingsService.shared.getSettings()
         var count = 0
-        if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.custompaywallv2Monthly {
+        if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly {
             count += 1
         }
-        if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.custompaywallv2Weekly {
+        if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly {
             count += 1
         }
         return count == 1
@@ -407,6 +432,11 @@ class PaywallV2ViewModel: ObservableObject {
     private func findPackages(from offering: Offering) {
         // Find lifetime
         lifetimePackage = offering.availablePackages.first(where: { $0.packageType == .lifetime })
+
+        // Find yearly
+        yearlyPackage = offering.availablePackages.first(where: {
+            $0.storeProduct.subscriptionPeriod?.unit == .year
+        })
 
         // Find monthly
         monthlyPackage = offering.availablePackages.first(where: {
@@ -457,23 +487,29 @@ class PaywallV2ViewModel: ObservableObject {
         let settings = PaywallSettingsService.shared.getSettings()
         if enabled {
             // Enable trial - select first available trial plan
-            if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.custompaywallv2Weekly {
+            if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly {
                 selectedPlan = "weekly"
-            } else if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.custompaywallv2Monthly {
+            } else if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly {
                 selectedPlan = "monthly"
             }
         } else {
-            // Disable trial - select lifetime
-            selectedPlan = "lifetime"
+            // Disable trial - select yearly if yearly mode enabled, otherwise lifetime
+            if settings.paywallYearly {
+                selectedPlan = "yearly"
+            } else {
+                selectedPlan = "lifetime"
+            }
         }
     }
 
     func getButtonText() -> String {
         let settings = PaywallSettingsService.shared.getSettings()
-        let hideTrial = settings.custompaywallv2HideTrial
+        let hideTrial = settings.paywallHideTrial
 
         if selectedPlan == "lifetime" {
             return "Get Lifetime Access"
+        } else if selectedPlan == "yearly" {
+            return "Get Yearly Access"
         } else if !hideTrial && trialEnabled &&
                   (monthlyPackage?.storeProduct.introductoryDiscount != nil ||
                    weeklyPackage?.storeProduct.introductoryDiscount != nil) {
@@ -487,6 +523,8 @@ class PaywallV2ViewModel: ObservableObject {
         let package: Package?
         if selectedPlan == "lifetime" {
             package = lifetimePackage
+        } else if selectedPlan == "yearly" {
+            package = yearlyPackage
         } else if selectedPlan == "monthly" {
             package = monthlyPackage
         } else {
@@ -547,8 +585,8 @@ class PaywallV2ViewModel: ObservableObject {
 }
 
 // MARK: - Preview
-struct CustomPaywallV2View_Previews: PreviewProvider {
+struct CustomPaywallView_Previews: PreviewProvider {
     static var previews: some View {
-        CustomPaywallV2View(isLimitTriggered: false, hardPaywall: false)
+        CustomPaywallView(isLimitTriggered: false, hardPaywall: false)
     }
 }
