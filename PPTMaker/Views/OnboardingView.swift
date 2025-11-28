@@ -155,19 +155,26 @@ struct OnboardingView: View {
         HapticManager.shared.success()
         UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
 
-        // Show paywall after onboarding if not subscribed
-        Task {
-            let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
+        let settings = PaywallSettingsService.shared.getSettings()
 
-            await MainActor.run {
-                if !hasPremium {
-                    // Show paywall immediately before dismissing onboarding
-                    showPaywall = true
-                } else {
-                    // Dismiss onboarding only if user has premium
-                    isPresented = false
+        // Only show paywall after onboarding if showPaywallOnStart is enabled
+        if settings.showPaywallOnStart {
+            Task {
+                let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
+
+                await MainActor.run {
+                    if !hasPremium {
+                        // Show paywall immediately before dismissing onboarding
+                        showPaywall = true
+                    } else {
+                        // Dismiss onboarding only if user has premium
+                        isPresented = false
+                    }
                 }
             }
+        } else {
+            // Skip paywall, go directly to app
+            isPresented = false
         }
     }
 }

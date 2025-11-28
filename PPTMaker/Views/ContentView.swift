@@ -743,6 +743,15 @@ struct ContentView: View {
             return
         }
 
+        let settings = PaywallSettingsService.shared.getSettings()
+
+        // Only show paywall on start if showPaywallOnStart is enabled
+        guard settings.showPaywallOnStart else {
+            print("[Paywall] showPaywallOnStart is disabled, skipping launch paywall")
+            isCheckingPaywall = false
+            return
+        }
+
         // Check premium status and show paywall if not subscribed
         Task {
             let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
