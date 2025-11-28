@@ -745,27 +745,34 @@ struct ContentView: View {
 
         let settings = PaywallSettingsService.shared.getSettings()
 
-        // Only show paywall on start if showPaywallOnStart is enabled
-        guard settings.showPaywallOnStart else {
-            print("[Paywall] showPaywallOnStart is disabled, skipping launch paywall")
-            isCheckingPaywall = false
-            return
-        }
-
-        // Check premium status and show paywall if not subscribed
+        // Check premium status and limits
         Task {
             let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
             print("[Paywall] Checking at launch - Has premium: \(hasPremium)")
 
+            // Premium users never see paywall
+            if hasPremium {
+                print("[Paywall] Not showing - User has premium access")
+                await MainActor.run {
+                    isCheckingPaywall = false
+                }
+                return
+            }
+
+            // Check if limit is already reached
+            let limitReached = await LimitTrackingService.shared.hasReachedAnyLimit()
+            print("[Paywall] Limit reached: \(limitReached)")
+
             await MainActor.run {
-                if !hasPremium {
-                    // Show paywall immediately for non-subscribers
-                    print("[Paywall] Showing launch paywall (not subscribed)...")
+                // Show paywall if:
+                // 1. showPaywallOnStart is true (always show for non-premium), OR
+                // 2. showPaywallOnStart is false BUT limit is already reached
+                if settings.showPaywallOnStart || limitReached {
+                    print("[Paywall] Showing launch paywall (showPaywallOnStart: \(settings.showPaywallOnStart), limitReached: \(limitReached))...")
                     showLaunchPaywall = true
                 } else {
-                    print("[Paywall] Not showing - User has premium access")
+                    print("[Paywall] Not showing - showPaywallOnStart is false and limit not reached")
                 }
-                // Done checking, show content
                 isCheckingPaywall = false
             }
         }
