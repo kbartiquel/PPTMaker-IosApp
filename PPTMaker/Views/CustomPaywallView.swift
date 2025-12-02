@@ -237,13 +237,13 @@ struct CustomPaywallView: View {
 
                     Text("•").font(.system(size: 12)).foregroundColor(.gray)
 
-                    Link("Privacy", destination: URL(string: "https://yourapp.com/privacy")!)
+                    Link("Privacy", destination: URL(string: "https://kimbytes.com/pptmaker/privacy.html")!)
                         .font(.system(size: 12))
                         .foregroundColor(.gray)
 
                     Text("•").font(.system(size: 12)).foregroundColor(.gray)
 
-                    Link("Terms", destination: URL(string: "https://yourapp.com/terms")!)
+                    Link("Terms", destination: URL(string: "https://kimbytes.com/pptmaker/terms.html")!)
                         .font(.system(size: 12))
                         .foregroundColor(.gray)
                 }
