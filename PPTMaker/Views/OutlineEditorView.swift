@@ -10,7 +10,8 @@ import SwiftUI
 struct OutlineEditorView: View {
     @ObservedObject var viewModel: PresentationViewModel
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    @State private var showAddSlideSheet = false
 
     // Dynamic colors based on theme
     private var backgroundColor: Color {
@@ -65,6 +66,9 @@ struct OutlineEditorView: View {
                                             slide: slide,
                                             onSave: { updatedSlide in
                                                 viewModel.updateSlide(at: index, with: updatedSlide)
+                                            },
+                                            onDelete: {
+                                                viewModel.removeSlide(at: index)
                                             }
                                         )
                                     } label: {
@@ -141,6 +145,24 @@ struct OutlineEditorView: View {
                                         .cornerRadius(12)
                                     }
                                 }
+
+                                // Add Slide Button
+                                Button {
+                                    HapticManager.shared.lightTap()
+                                    showAddSlideSheet = true
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 20))
+                                        Text("Add Slide")
+                                            .font(.system(size: 15, weight: .semibold))
+                                    }
+                                    .foregroundColor(Color.brandPrimary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.brandPrimary.opacity(0.12))
+                                    .cornerRadius(12)
+                                }
                             }
                         }
                     }
@@ -168,6 +190,9 @@ struct OutlineEditorView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .sheet(isPresented: $showAddSlideSheet) {
+                AddSlideSheet(viewModel: viewModel)
+            }
             .preferredColorScheme(isDarkMode ? .dark : .light)
         }
     }
@@ -183,8 +208,10 @@ struct OutlineEditorView: View {
 struct SlideEditorView: View {
     @State private var slide: SlideData
     let onSave: (SlideData) -> Void
+    let onDelete: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    @State private var showDeleteConfirmation = false
 
     // Dynamic colors based on theme
     private var backgroundColor: Color {
@@ -203,9 +230,10 @@ struct SlideEditorView: View {
         isDarkMode ? Color.white.opacity(0.6) : Color.gray
     }
 
-    init(slide: SlideData, onSave: @escaping (SlideData) -> Void) {
+    init(slide: SlideData, onSave: @escaping (SlideData) -> Void, onDelete: (() -> Void)? = nil) {
         _slide = State(initialValue: slide)
         self.onSave = onSave
+        self.onDelete = onDelete
     }
 
     var body: some View {
@@ -433,14 +461,139 @@ struct SlideEditorView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Save") {
-                    onSave(slide)
-                    dismiss()
+                HStack(spacing: 16) {
+                    if let onDelete = onDelete, !slide.isTitleSlide {
+                        Button {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                        }
+                    }
+
+                    Button("Save") {
+                        onSave(slide)
+                        dismiss()
+                    }
+                    .foregroundColor(Color.brandPrimary)
+                    .fontWeight(.semibold)
                 }
-                .foregroundColor(Color.brandPrimary)
-                .fontWeight(.semibold)
             }
         }
+        .alert("Delete Slide", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                onDelete?()
+                dismiss()
+            }
+        } message: {
+            Text("Are you sure you want to delete this slide?")
+        }
         .preferredColorScheme(isDarkMode ? .dark : .light)
+    }
+}
+
+// MARK: - Add Slide Sheet
+struct AddSlideSheet: View {
+    @ObservedObject var viewModel: PresentationViewModel
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("isDarkMode") private var isDarkMode = false
+
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color.white
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
+
+    let slideTypes: [(type: String, name: String, icon: String, description: String, color: Color)] = [
+        ("content", "Content", "list.bullet", "Standard slide with bullet points", Color.brandPrimary),
+        ("section", "Section", "rectangle.split.1x2", "Large divider slide between sections", Color(red: 245/255, green: 158/255, blue: 11/255)),
+        ("quote", "Quote", "quote.bubble", "Inspirational quote with author", Color.brandPrimary),
+        ("two-column", "Two Column", "rectangle.split.2x1", "Side-by-side comparison", Color(red: 16/255, green: 185/255, blue: 129/255))
+    ]
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                backgroundColor
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 12) {
+                        Text("Choose a slide type to add")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(secondaryTextColor)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
+
+                        ForEach(slideTypes, id: \.type) { slideType in
+                            Button {
+                                HapticManager.shared.mediumTap()
+                                viewModel.addSlide(type: slideType.type)
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 16) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(slideType.color.opacity(0.15))
+                                            .frame(width: 48, height: 48)
+
+                                        Image(systemName: slideType.icon)
+                                            .font(.system(size: 20))
+                                            .foregroundColor(slideType.color)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(slideType.name)
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(textColor)
+
+                                        Text(slideType.description)
+                                            .font(.system(size: 13))
+                                            .foregroundColor(secondaryTextColor)
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(slideType.color)
+                                }
+                                .padding(16)
+                                .background(cardColor)
+                                .cornerRadius(14)
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                    }
+                    .padding(.vertical, 16)
+                }
+            }
+            .navigationTitle("Add Slide")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
+            .toolbarBackground(backgroundColor, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(textColor)
+                }
+            }
+            .preferredColorScheme(isDarkMode ? .dark : .light)
+        }
     }
 }

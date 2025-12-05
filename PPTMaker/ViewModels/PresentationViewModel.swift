@@ -136,9 +136,103 @@ class PresentationViewModel: ObservableObject {
         outline.slides.remove(at: index)
         Analytics.shared.trackSlideRemoved()
         // Update slide numbers - preserve all slide fields
+        renumberSlides(&outline)
+        presentationOutline = outline
+    }
+
+    func addSlide(type: String, at index: Int? = nil) {
+        guard var outline = presentationOutline else { return }
+
+        let insertIndex = index ?? outline.slides.count
+        let newSlideNumber = insertIndex + 1
+
+        // Create new slide based on type with default content
+        var newSlide: SlideData
+
+        switch type {
+        case "content":
+            newSlide = SlideData(
+                slideNumber: newSlideNumber,
+                type: "content",
+                title: "New Slide",
+                subtitle: nil,
+                bulletPoints: ["Point 1", "Point 2", "Point 3"],
+                quoteText: nil,
+                quoteAuthor: nil,
+                columnLeftTitle: nil,
+                columnLeftPoints: nil,
+                columnRightTitle: nil,
+                columnRightPoints: nil
+            )
+        case "section":
+            newSlide = SlideData(
+                slideNumber: newSlideNumber,
+                type: "section",
+                title: "New Section",
+                subtitle: nil,
+                bulletPoints: nil,
+                quoteText: nil,
+                quoteAuthor: nil,
+                columnLeftTitle: nil,
+                columnLeftPoints: nil,
+                columnRightTitle: nil,
+                columnRightPoints: nil
+            )
+        case "quote":
+            newSlide = SlideData(
+                slideNumber: newSlideNumber,
+                type: "quote",
+                title: nil,
+                subtitle: nil,
+                bulletPoints: nil,
+                quoteText: "Enter your quote here",
+                quoteAuthor: "Author Name",
+                columnLeftTitle: nil,
+                columnLeftPoints: nil,
+                columnRightTitle: nil,
+                columnRightPoints: nil
+            )
+        case "two-column":
+            newSlide = SlideData(
+                slideNumber: newSlideNumber,
+                type: "two-column",
+                title: "Comparison",
+                subtitle: nil,
+                bulletPoints: nil,
+                quoteText: nil,
+                quoteAuthor: nil,
+                columnLeftTitle: "Left",
+                columnLeftPoints: ["Point 1", "Point 2"],
+                columnRightTitle: "Right",
+                columnRightPoints: ["Point 1", "Point 2"]
+            )
+        default:
+            newSlide = SlideData(
+                slideNumber: newSlideNumber,
+                type: "content",
+                title: "New Slide",
+                subtitle: nil,
+                bulletPoints: ["Point 1"],
+                quoteText: nil,
+                quoteAuthor: nil,
+                columnLeftTitle: nil,
+                columnLeftPoints: nil,
+                columnRightTitle: nil,
+                columnRightPoints: nil
+            )
+        }
+
+        outline.slides.insert(newSlide, at: insertIndex)
+
+        // Renumber all slides
+        renumberSlides(&outline)
+        presentationOutline = outline
+    }
+
+    private func renumberSlides(_ outline: inout PresentationOutline) {
         for i in 0..<outline.slides.count {
-            var updatedSlide = outline.slides[i]
-            updatedSlide = SlideData(
+            let updatedSlide = outline.slides[i]
+            outline.slides[i] = SlideData(
                 slideNumber: i + 1,
                 type: updatedSlide.type,
                 title: updatedSlide.title,
@@ -151,9 +245,7 @@ class PresentationViewModel: ObservableObject {
                 columnRightTitle: updatedSlide.columnRightTitle,
                 columnRightPoints: updatedSlide.columnRightPoints
             )
-            outline.slides[i] = updatedSlide
         }
-        presentationOutline = outline
     }
 
     // MARK: - Step 3: Generate Final Presentation
