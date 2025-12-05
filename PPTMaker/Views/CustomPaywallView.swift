@@ -363,10 +363,7 @@ class PaywallViewModel: ObservableObject {
     @Published var yearlyPackage: Package?
     @Published var monthlyPackage: Package?
     @Published var weeklyPackage: Package?
-    @Published var selectedPlan: String = {
-        let settings = PaywallSettingsService.shared.getSettings()
-        return settings.paywallYearly ? "yearly" : "lifetime"
-    }()
+    @Published var selectedPlan: String = "lifetime" // Will be updated in loadOffering based on settings
     @Published var trialEnabled = false
     @Published var isLoading = true
     @Published var isPurchasing = false
@@ -414,6 +411,15 @@ class PaywallViewModel: ObservableObject {
                 if let current = offerings.current {
                     self.offering = current
                     findPackages(from: current)
+
+                    // Set initial selected plan based on settings after packages are loaded
+                    let settings = PaywallSettingsService.shared.getSettings()
+                    if settings.paywallYearly && self.yearlyPackage != nil {
+                        self.selectedPlan = "yearly"
+                    } else if self.lifetimePackage != nil {
+                        self.selectedPlan = "lifetime"
+                    }
+
                     self.isLoading = false
                     startCloseTimer()
                 } else {
