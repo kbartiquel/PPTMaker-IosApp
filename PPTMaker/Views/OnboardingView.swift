@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @Binding var isPresented: Bool
     @State private var currentPage = 0
     @State private var showPaywall = false
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     // Dynamic colors based on theme
     private var backgroundColor: Color {
@@ -66,18 +66,6 @@ struct OnboardingView: View {
                 Feature(icon: "plus.circle", text: "Add or remove slides", color: Color.brandPrimary)
             ],
             visualType: .standard
-        ),
-        OnboardingPage(
-            icon: "paintbrush.fill",
-            iconColor: Color(red: 251/255, green: 146/255, blue: 60/255),
-            title: "Beautiful Templates",
-            description: "Choose from professionally designed templates that match your style",
-            features: [
-                Feature(icon: "briefcase.fill", text: "Corporate & Business", color: Color.brandPrimary),
-                Feature(icon: "graduationcap.fill", text: "Academic & Educational", color: Color.brandPrimary),
-                Feature(icon: "sparkles", text: "Modern & Creative", color: Color.brandPrimary)
-            ],
-            visualType: .templates
         ),
         OnboardingPage(
             icon: "square.and.arrow.down.fill",
@@ -192,7 +180,6 @@ struct OnboardingPage {
         case standard
         case animated
         case slideTypes
-        case templates
     }
 }
 
@@ -212,83 +199,75 @@ struct OnboardingPageView: View {
     @State private var animateIcon = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Spacer()
-                    .frame(height: 40)
+        VStack(spacing: 16) {
+            Spacer()
+                .frame(height: 20)
 
-                // Icon with gradient background
-                ZStack {
-                    // Gradient circle background
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    page.iconColor.opacity(0.3),
-                                    page.iconColor.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+            // Icon with gradient background
+            ZStack {
+                // Gradient circle background
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                page.iconColor.opacity(0.3),
+                                page.iconColor.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .frame(width: 140, height: 140)
-                        .blur(radius: 20)
+                    )
+                    .frame(width: 100, height: 100)
+                    .blur(radius: 15)
 
-                    Circle()
-                        .fill(page.iconColor.opacity(0.15))
-                        .frame(width: 120, height: 120)
+                Circle()
+                    .fill(page.iconColor.opacity(0.15))
+                    .frame(width: 80, height: 80)
 
-                    Image(systemName: page.icon)
-                        .font(.system(size: 56, weight: .medium))
-                        .foregroundColor(page.iconColor)
-                        .scaleEffect(animateIcon ? 1.0 : 0.8)
-                        .opacity(animateIcon ? 1.0 : 0.5)
-                }
-                .padding(.bottom, 16)
-
-                // Title
-                Text(page.title)
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(textColor)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(2)
-                    .padding(.horizontal, 32)
-
-                // Description
-                Text(page.description)
-                    .font(.system(size: 17))
-                    .foregroundColor(secondaryTextColor)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(6)
-                    .padding(.horizontal, 40)
-                    .padding(.top, 4)
-
-                // Features list
-                VStack(spacing: 14) {
-                    ForEach(Array(page.features.enumerated()), id: \.offset) { index, feature in
-                        FeatureRow(
-                            feature: feature,
-                            textColor: textColor,
-                            cardColor: cardColor,
-                            delay: Double(index) * 0.1
-                        )
-                    }
-                }
-                .padding(.horizontal, 28)
-                .padding(.top, 20)
-
-                // Visual element based on page type
-                if page.visualType == .slideTypes {
-                    SlideTypeVisual()
-                        .padding(.top, 12)
-                } else if page.visualType == .templates {
-                    TemplatePreviewVisual()
-                        .padding(.top, 12)
-                }
-
-                Spacer()
-                    .frame(height: 60)
+                Image(systemName: page.icon)
+                    .font(.system(size: 36, weight: .medium))
+                    .foregroundColor(page.iconColor)
+                    .scaleEffect(animateIcon ? 1.0 : 0.8)
+                    .opacity(animateIcon ? 1.0 : 0.5)
             }
+
+            // Title
+            Text(page.title)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(textColor)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .padding(.horizontal, 32)
+
+            // Description
+            Text(page.description)
+                .font(.system(size: 15))
+                .foregroundColor(secondaryTextColor)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .padding(.horizontal, 32)
+
+            // Features list
+            VStack(spacing: 10) {
+                ForEach(Array(page.features.enumerated()), id: \.offset) { index, feature in
+                    FeatureRow(
+                        feature: feature,
+                        textColor: textColor,
+                        cardColor: cardColor,
+                        delay: Double(index) * 0.1
+                    )
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+
+            // Visual element based on page type
+            if page.visualType == .slideTypes {
+                SlideTypeVisual()
+                    .padding(.top, 8)
+            }
+
+            Spacer()
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
@@ -308,31 +287,31 @@ struct FeatureRow: View {
     @State private var appear = false
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             // Icon
             ZStack {
                 Circle()
                     .fill(feature.color.opacity(0.15))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 36, height: 36)
 
                 Image(systemName: feature.icon)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(feature.color)
             }
 
             // Text
             Text(feature.text)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(textColor)
 
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(cardColor)
-                .shadow(color: feature.color.opacity(0.1), radius: 8, x: 0, y: 4)
+                .shadow(color: feature.color.opacity(0.1), radius: 6, x: 0, y: 3)
         )
         .opacity(appear ? 1 : 0)
         .offset(x: appear ? 0 : -20)
@@ -376,48 +355,6 @@ struct SlideTypeBadge: View {
             Text(label)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.gray)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Template Preview Visual
-struct TemplatePreviewVisual: View {
-    var body: some View {
-        HStack(spacing: 10) {
-            TemplateCard(color: Color.brandPrimary)
-            TemplateCard(color: Color.brandPrimary)
-            TemplateCard(color: Color.brandPrimary)
-        }
-        .padding(.horizontal, 40)
-    }
-}
-
-struct TemplateCard: View {
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(color.opacity(0.3))
-                .frame(height: 60)
-                .overlay(
-                    VStack(spacing: 3) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(color.opacity(0.6))
-                            .frame(height: 8)
-                            .padding(.horizontal, 6)
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(color.opacity(0.4))
-                            .frame(height: 4)
-                            .padding(.horizontal, 6)
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(color.opacity(0.4))
-                            .frame(height: 4)
-                            .padding(.horizontal, 6)
-                    }
-                    .padding(.vertical, 8)
-                )
         }
         .frame(maxWidth: .infinity)
     }
