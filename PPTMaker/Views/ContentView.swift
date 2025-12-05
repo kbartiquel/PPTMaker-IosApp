@@ -10,16 +10,16 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = PresentationViewModel()
     @State private var showTemplateSelection = false
-    @State private var shareItem: URL?
     @State private var showHistory = false
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
+    @State private var justCompletedOnboarding = false
     @State private var previewURL: URL?
     @State private var showLaunchPaywall = false
     @State private var isCheckingPaywall = true
     @State private var showLimitBadgePaywall = false
     @State private var outlineUsageCount = 0
     @State private var hasPremiumAccess = false
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     // Dynamic colors based on theme
     private var backgroundColor: Color {
@@ -69,7 +69,7 @@ struct ContentView: View {
                                 generateButtonSection
                             }
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 60 : 20)
                         .padding(.top, 16)
                         .padding(.bottom, 40)
                     }
@@ -122,13 +122,13 @@ struct ContentView: View {
             .sheet(isPresented: $showTemplateSelection) {
                 TemplateSelectionView(selectedTemplate: $viewModel.selectedTemplate)
             }
-            .sheet(item: $shareItem) { url in
-                ShareSheet(items: [url])
-            }
             .sheet(isPresented: $showHistory) {
                 PresentationHistoryView(viewModel: viewModel)
             }
-            .fullScreenCover(isPresented: $showOnboarding) {
+            .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
+                // Mark that we just completed onboarding to prevent double paywall
+                justCompletedOnboarding = true
+            }) {
                 OnboardingView(isPresented: $showOnboarding)
             }
             .sheet(item: $previewURL) { url in
@@ -167,13 +167,21 @@ struct ContentView: View {
                 Button("Preview") {
                     HapticManager.shared.lightTap()
                     if let url = viewModel.generatedFileURL {
-                        previewURL = url
+                        // Dismiss alert first, then show preview after delay
+                        viewModel.showSuccess = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            previewURL = url
+                        }
                     }
                 }
                 Button("Share") {
                     HapticManager.shared.lightTap()
                     if let url = viewModel.generatedFileURL {
-                        shareItem = url
+                        // Dismiss alert first, then share
+                        viewModel.showSuccess = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            shareFile(url: url)
+                        }
                     }
                 }
                 Button("Create Another") {
@@ -188,6 +196,7 @@ struct ContentView: View {
                 Text("Your presentation has been created successfully!")
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     // MARK: - Step 1: Topic Input
@@ -275,6 +284,18 @@ struct ContentView: View {
                         Text("20")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(secondaryTextColor)
+                    }
+
+                    // Warning for 15+ slides
+                    if viewModel.numSlides >= 15 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 11))
+                            Text("May take 30-60 seconds to generate")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .foregroundColor(.orange)
+                        .padding(.top, 4)
                     }
                 }
                 .padding(14)
@@ -743,6 +764,20 @@ struct ContentView: View {
             return
         }
 
+        // Don't show if onboarding is still showing (onboarding handles its own paywall)
+        guard !showOnboarding else {
+            print("[Paywall] Onboarding is active, skipping launch paywall")
+            isCheckingPaywall = false
+            return
+        }
+
+        // Don't show if user just completed onboarding (onboarding already showed paywall if needed)
+        guard !justCompletedOnboarding else {
+            print("[Paywall] Just completed onboarding, skipping launch paywall")
+            isCheckingPaywall = false
+            return
+        }
+
         let settings = PaywallSettingsService.shared.getSettings()
 
         // Check premium status and limits
@@ -933,6 +968,38 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Share Helper
+func shareFile(url: URL) {
+    guard FileManager.default.fileExists(atPath: url.path) else {
+        print("[Share] File not found at: \(url.path)")
+        return
+    }
+
+    let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+
+    // Find the key window and top-most view controller
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+          var topController = window.rootViewController else {
+        print("[Share] Could not find root view controller")
+        return
+    }
+
+    // Navigate to the top-most presented controller
+    while let presented = topController.presentedViewController {
+        topController = presented
+    }
+
+    // For iPad, set the popover source
+    if let popover = activityVC.popoverPresentationController {
+        popover.sourceView = topController.view
+        popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
+        popover.permittedArrowDirections = []
+    }
+
+    topController.present(activityVC, animated: true)
 }
 
 // MARK: - Preview
