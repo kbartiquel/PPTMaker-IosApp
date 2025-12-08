@@ -16,7 +16,7 @@ struct PresentationHistoryView: View {
     @State private var selectedPresentation: URL?
     @State private var showDeleteAlert = false
     @State private var presentationToDelete: URL?
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     private let fileService = FileService()
     private let apiService = APIService()
@@ -184,26 +184,38 @@ struct PresentationHistoryView: View {
 
     private func sharePresentation(_ url: URL) {
         HapticManager.shared.impact(style: .medium)
-        // Share via system share sheet
+
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            print("[Share] File not found at: \(url.path)")
+            return
+        }
+
         let activityVC = UIActivityViewController(
             activityItems: [url],
             applicationActivities: nil
         )
 
-        // Configure for iPad
-        if let popoverController = activityVC.popoverPresentationController {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
-                popoverController.sourceView = window
-                popoverController.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
-                popoverController.permittedArrowDirections = []
-            }
+        // Find the key window and top-most view controller
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+              var topController = window.rootViewController else {
+            print("[Share] Could not find root view controller")
+            return
         }
 
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true)
+        // Navigate to the top-most presented controller
+        while let presented = topController.presentedViewController {
+            topController = presented
         }
+
+        // Configure for iPad
+        if let popoverController = activityVC.popoverPresentationController {
+            popoverController.sourceView = topController.view
+            popoverController.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+        }
+
+        topController.present(activityVC, animated: true)
     }
 }
 
@@ -284,7 +296,7 @@ import QuickLook
 struct QuickLookPreview: View {
     let url: URL
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     private var backgroundColor: Color {
         isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color(red: 245/255, green: 245/255, blue: 250/255)

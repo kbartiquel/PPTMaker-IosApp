@@ -144,7 +144,7 @@ struct ContentView: View {
                 PaywallView(isLimitTriggered: false, hardPaywall: false)
             }
             .fullScreenCover(isPresented: $showLimitBadgePaywall) {
-                PaywallView(isLimitTriggered: true, hardPaywall: false)
+                PaywallView(isLimitTriggered: false, hardPaywall: false, showCloseButtonImmediately: true)
             }
             .onAppear {
                 checkAndShowLaunchPaywall()

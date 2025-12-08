@@ -15,10 +15,12 @@ struct CustomPaywallView: View {
 
     let isLimitTriggered: Bool
     let hardPaywall: Bool
+    let showCloseButtonImmediately: Bool
 
-    init(isLimitTriggered: Bool = false, hardPaywall: Bool = false) {
+    init(isLimitTriggered: Bool = false, hardPaywall: Bool = false, showCloseButtonImmediately: Bool = false) {
         self.isLimitTriggered = isLimitTriggered
         self.hardPaywall = hardPaywall
+        self.showCloseButtonImmediately = showCloseButtonImmediately
     }
 
     var body: some View {
@@ -74,7 +76,8 @@ struct CustomPaywallView: View {
         }
         .onAppear {
             let settings = PaywallSettingsService.shared.getSettings()
-            let delay = isLimitTriggered ? settings.paywallCloseButtonDelayOnLimit : settings.paywallCloseButtonDelay
+            // If showCloseButtonImmediately is true (e.g., credit badge tap), use 0 delay
+            let delay = showCloseButtonImmediately ? 0 : (isLimitTriggered ? settings.paywallCloseButtonDelayOnLimit : settings.paywallCloseButtonDelay)
             viewModel.loadOffering(closeDelay: delay)
         }
         .alert("Error", isPresented: $viewModel.showError) {

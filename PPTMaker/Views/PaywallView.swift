@@ -12,10 +12,12 @@ import RevenueCatUI
 struct PaywallView: View {
     let isLimitTriggered: Bool
     let hardPaywall: Bool
+    let showCloseButtonImmediately: Bool
 
-    init(isLimitTriggered: Bool = false, hardPaywall: Bool = false) {
+    init(isLimitTriggered: Bool = false, hardPaywall: Bool = false, showCloseButtonImmediately: Bool = false) {
         self.isLimitTriggered = isLimitTriggered
         self.hardPaywall = hardPaywall
+        self.showCloseButtonImmediately = showCloseButtonImmediately
     }
 
     var body: some View {
@@ -26,7 +28,8 @@ struct PaywallView: View {
             // Show custom paywall
             CustomPaywallView(
                 isLimitTriggered: isLimitTriggered,
-                hardPaywall: hardPaywall
+                hardPaywall: hardPaywall,
+                showCloseButtonImmediately: showCloseButtonImmediately
             )
         } else {
             // Show RevenueCat dynamic paywall

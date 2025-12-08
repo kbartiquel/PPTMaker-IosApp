@@ -10,7 +10,7 @@ import SwiftUI
 struct TemplateSelectionView: View {
     @Binding var selectedTemplate: Template
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("isDarkMode") private var isDarkMode = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     // Dynamic colors based on theme
     private var backgroundColor: Color {
@@ -207,12 +207,12 @@ struct GeometricStylePreview: View {
         ZStack {
             Color.white
 
-            // Diagonal accent shape
+            // Diagonal accent shape - positioned in top right corner
             Rectangle()
                 .fill(template.primaryColor)
-                .frame(width: 200, height: 80)
-                .rotationEffect(.degrees(15))
-                .offset(x: 50, y: -40)
+                .frame(width: 120, height: 60)
+                .rotationEffect(.degrees(-25))
+                .offset(x: 70, y: -30)
 
             // Top bar
             VStack {
@@ -230,8 +230,8 @@ struct GeometricStylePreview: View {
 
             RoundedRectangle(cornerRadius: 4)
                 .fill(template.primaryColor.opacity(0.3))
-                .frame(width: 50, height: 50)
-                .offset(x: 60, y: 45)
+                .frame(width: 40, height: 40)
+                .offset(x: 50, y: 50)
 
             // Text mockup
             VStack(alignment: .leading, spacing: 4) {
@@ -252,6 +252,7 @@ struct GeometricStylePreview: View {
             }
             .offset(x: -25, y: 0)
         }
+        .clipped()
     }
 }
 

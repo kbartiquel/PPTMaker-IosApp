@@ -31,12 +31,8 @@ enum APIError: LocalizedError {
 }
 
 class APIService {
-    // Change this to your production URL when deployed
-    #if DEBUG
-    static let baseURL = "http://localhost:8000"
-    #else
-    static let baseURL = "https://your-render-app.onrender.com"
-    #endif
+    // Production API URL
+    static let baseURL = "https://ppt-maker-server.onrender.com"
 
     // MARK: - Step 1: Generate Outline
     func generateOutline(topic: String, numSlides: Int, tone: String? = nil, allowedSlideTypes: [String]? = nil) async throws -> PresentationOutline {
