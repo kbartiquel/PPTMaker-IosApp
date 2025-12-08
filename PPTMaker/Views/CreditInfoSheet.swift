@@ -120,6 +120,10 @@ struct CreditInfoSheet: View {
             // Unlock Button
             Button {
                 HapticManager.shared.mediumTap()
+                Analytics.shared.trackUnlockUnlimitedTapped(
+                    outlineCreditsUsed: outlineUsageCount,
+                    presentationCreditsUsed: presentationUsageCount
+                )
                 dismiss()
                 // Small delay to let sheet dismiss before showing paywall
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
@@ -162,6 +166,14 @@ struct CreditInfoSheet: View {
         .background(backgroundColor)
         .presentationDetents([.height(480)])
         .presentationDragIndicator(.hidden)
+        .onAppear {
+            Analytics.shared.trackCreditInfoSheetShown(
+                outlineCreditsUsed: outlineUsageCount,
+                outlineCreditsLimit: outlineLimit,
+                presentationCreditsUsed: presentationUsageCount,
+                presentationCreditsLimit: presentationLimit
+            )
+        }
     }
 
     private func creditCard(icon: String, title: String, used: Int, total: Int, remaining: Int, color: Color) -> some View {

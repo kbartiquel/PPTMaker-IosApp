@@ -79,6 +79,22 @@ struct CustomPaywallView: View {
             // If showCloseButtonImmediately is true (e.g., credit badge tap), use 0 delay
             let delay = showCloseButtonImmediately ? 0 : (isLimitTriggered ? settings.paywallCloseButtonDelayOnLimit : settings.paywallCloseButtonDelay)
             viewModel.loadOffering(closeDelay: delay)
+
+            // Track paywall shown
+            let source = showCloseButtonImmediately ? "credit_badge" : (isLimitTriggered ? "limit_reached" : "app_launch")
+            Task {
+                let hasPremium = await RevenueCatService.shared.hasPremiumAccess()
+                let outlineUsed = LimitTrackingService.shared.getOutlineCount()
+                let presentationUsed = LimitTrackingService.shared.getPresentationCount()
+                Analytics.shared.trackPaywallShown(
+                    source: source,
+                    hasPremium: hasPremium,
+                    outlineCreditsUsed: outlineUsed,
+                    outlineCreditsLimit: settings.outlineLimit,
+                    presentationCreditsUsed: presentationUsed,
+                    presentationCreditsLimit: settings.presentationLimit
+                )
+            }
         }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK", role: .cancel) {}
@@ -551,13 +567,15 @@ class PaywallViewModel: ObservableObject {
                 isPurchasing = false
 
                 if !result.customerInfo.entitlements.active.isEmpty {
-                    // Success - request review and dismiss paywall
+                    // Success - track, request review and dismiss paywall
+                    Analytics.shared.trackPurchaseCompleted(plan: selectedPlan)
                     ReviewManager.shared.requestReviewAfterPurchase()
                     onSuccess()
                 }
             } catch {
                 // Clear loading state on error/cancellation
                 isPurchasing = false
+                Analytics.shared.trackPurchaseFailed(plan: selectedPlan, error: error.localizedDescription)
                 errorMessage = "Purchase failed: \(error.localizedDescription)"
                 showError = true
             }
@@ -566,20 +584,24 @@ class PaywallViewModel: ObservableObject {
 
     func restorePurchases(onSuccess: @escaping () -> Void) {
         isRestoring = true
+        Analytics.shared.trackRestorePurchasesTapped()
 
         Task {
             do {
                 let customerInfo = try await Purchases.shared.restorePurchases()
                 if !customerInfo.entitlements.active.isEmpty {
                     // Success - dismiss paywall
+                    Analytics.shared.trackRestorePurchasesCompleted(success: true)
                     isRestoring = false
                     onSuccess()
                 } else {
+                    Analytics.shared.trackRestorePurchasesCompleted(success: false)
                     errorMessage = "No purchases to restore"
                     showError = true
                     isRestoring = false
                 }
             } catch {
+                Analytics.shared.trackRestorePurchasesCompleted(success: false)
                 errorMessage = "Restore failed: \(error.localizedDescription)"
                 showError = true
                 isRestoring = false
