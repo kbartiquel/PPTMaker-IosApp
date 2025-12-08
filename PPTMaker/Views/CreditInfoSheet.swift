@@ -9,12 +9,33 @@ import SwiftUI
 
 struct CreditInfoSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var showPaywall: Bool
 
     let outlineUsageCount: Int
     let outlineLimit: Int
     let presentationUsageCount: Int
     let presentationLimit: Int
+
+    private var isDarkMode: Bool {
+        colorScheme == .dark
+    }
+
+    private var backgroundColor: Color {
+        isDarkMode ? Color(red: 18/255, green: 18/255, blue: 24/255) : Color.white
+    }
+
+    private var cardColor: Color {
+        isDarkMode ? Color(red: 28/255, green: 32/255, blue: 42/255) : Color(UIColor.secondarySystemBackground)
+    }
+
+    private var textColor: Color {
+        isDarkMode ? .white : Color(red: 30/255, green: 30/255, blue: 30/255)
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkMode ? Color.white.opacity(0.6) : Color.gray
+    }
 
     private var outlineRemaining: Int {
         max(0, outlineLimit - outlineUsageCount)
@@ -28,7 +49,7 @@ struct CreditInfoSheet: View {
         VStack(spacing: 0) {
             // Handle bar
             RoundedRectangle(cornerRadius: 2.5)
-                .fill(Color.gray.opacity(0.3))
+                .fill(isDarkMode ? Color.white.opacity(0.3) : Color.gray.opacity(0.3))
                 .frame(width: 36, height: 5)
                 .padding(.top, 10)
                 .padding(.bottom, 20)
@@ -60,13 +81,13 @@ struct CreditInfoSheet: View {
             // Title
             Text("Free Credits")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.primary)
+                .foregroundColor(textColor)
                 .padding(.bottom, 8)
 
             // Subtitle
             Text("You're using the free version of PPT Maker")
                 .font(.system(size: 15))
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 24)
@@ -122,7 +143,7 @@ struct CreditInfoSheet: View {
                     )
                 )
                 .cornerRadius(14)
-                .shadow(color: Color.brandPrimary.opacity(0.4), radius: 10, x: 0, y: 5)
+                .shadow(color: Color.brandPrimary.opacity(isDarkMode ? 0.5 : 0.4), radius: 10, x: 0, y: 5)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
@@ -134,11 +155,11 @@ struct CreditInfoSheet: View {
             } label: {
                 Text("Maybe Later")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryTextColor)
             }
             .padding(.bottom, 24)
         }
-        .background(Color(UIColor.systemBackground))
+        .background(backgroundColor)
         .presentationDetents([.height(480)])
         .presentationDragIndicator(.hidden)
     }
@@ -148,7 +169,7 @@ struct CreditInfoSheet: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.12))
+                    .fill(color.opacity(isDarkMode ? 0.2 : 0.12))
                     .frame(width: 44, height: 44)
 
                 Image(systemName: icon)
@@ -160,11 +181,11 @@ struct CreditInfoSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(textColor)
 
                 Text("\(remaining) remaining")
                     .font(.system(size: 13))
-                    .foregroundColor(remaining > 0 ? .secondary : .red)
+                    .foregroundColor(remaining > 0 ? secondaryTextColor : .red)
             }
 
             Spacer()
@@ -177,13 +198,13 @@ struct CreditInfoSheet: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(remaining > 0 ? color.opacity(0.12) : Color.red.opacity(0.12))
+                        .fill(remaining > 0 ? color.opacity(isDarkMode ? 0.2 : 0.12) : Color.red.opacity(isDarkMode ? 0.2 : 0.12))
                 )
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(UIColor.secondarySystemBackground))
+                .fill(cardColor)
         )
     }
 }
