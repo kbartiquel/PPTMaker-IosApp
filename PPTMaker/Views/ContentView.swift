@@ -153,6 +153,9 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: .outlineGenerated)) { _ in
                 updateLimitStatus()
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PremiumStatusChanged"))) { _ in
+                updateLimitStatus()
+            }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
                     HapticManager.shared.error()

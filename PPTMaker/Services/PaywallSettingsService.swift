@@ -51,7 +51,7 @@ struct PaywallSettingsResponse: Codable {
 final class PaywallSettingsService {
     static let shared = PaywallSettingsService()
 
-    private let settingsURL = "http://localhost:8000/settings"
+    private let settingsURL = "https://ppt-maker-server.onrender.com/settings"
     private let userDefaults = UserDefaults.standard
     private let cacheKey = "cached_paywall_settings"
 
@@ -135,13 +135,13 @@ final class PaywallSettingsService {
 
     private func defaultSettings() -> PaywallSettings {
         return PaywallSettings(
-            presentationLimit: 2,
-            outlineLimit: 3,
+            presentationLimit: 10,
+            outlineLimit: 2,
             hardPaywall: false,
             customPaywall: true,
             paywallCloseButtonDelay: 30,
             paywallCloseButtonDelayOnLimit: 35,
-            showPaywallOnStart: false,
+            showPaywallOnStart: true,
             paywallMonthly: true,
             paywallWeekly: true,
             paywallHideTrial: false,
