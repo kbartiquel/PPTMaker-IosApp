@@ -17,7 +17,9 @@ struct ContentView: View {
     @State private var showLaunchPaywall = false
     @State private var isCheckingPaywall = true
     @State private var showLimitBadgePaywall = false
+    @State private var showCreditInfoSheet = false
     @State private var outlineUsageCount = 0
+    @State private var presentationUsageCount = 0
     @State private var hasPremiumAccess = false
     @AppStorage("isDarkMode") private var isDarkMode = false
 
@@ -98,7 +100,7 @@ struct ContentView: View {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             HapticManager.shared.lightTap()
-                            showLimitBadgePaywall = true
+                            showCreditInfoSheet = true
                         } label: {
                             limitBadgeView
                         }
@@ -124,6 +126,16 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showHistory) {
                 PresentationHistoryView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showCreditInfoSheet) {
+                let settings = PaywallSettingsService.shared.getSettings()
+                CreditInfoSheet(
+                    showPaywall: $showLimitBadgePaywall,
+                    outlineUsageCount: outlineUsageCount,
+                    outlineLimit: settings.outlineLimit,
+                    presentationUsageCount: presentationUsageCount,
+                    presentationLimit: settings.presentationLimit
+                )
             }
             .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
                 // Mark that we just completed onboarding to prevent double paywall
@@ -942,11 +954,13 @@ struct ContentView: View {
     private func updateLimitStatus() {
         Task {
             let premium = await RevenueCatService.shared.hasPremiumAccess()
-            let count = LimitTrackingService.shared.getOutlineCount()
+            let outlineCount = LimitTrackingService.shared.getOutlineCount()
+            let presentationCount = LimitTrackingService.shared.getPresentationCount()
 
             await MainActor.run {
                 hasPremiumAccess = premium
-                outlineUsageCount = count
+                outlineUsageCount = outlineCount
+                presentationUsageCount = presentationCount
             }
         }
     }
