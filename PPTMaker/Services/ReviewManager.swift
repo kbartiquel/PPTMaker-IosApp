@@ -38,7 +38,7 @@ class ReviewManager {
         UserDefaults.standard.set(count, forKey: presentationCountKey)
 
         // Request review every 2 presentations (2nd, 4th, 6th, etc.)
-        if count % 2 == 0 {
+        if count > 0 && count % 2 == 0 {
             requestReviewAfterMilestone()
         }
     }
