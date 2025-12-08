@@ -41,11 +41,11 @@ struct CreditInfoSheet: View {
 
     private var friendlyMessage: String {
         if outlineRemaining == 0 {
-            return "You've used all your free credits. Upgrade to keep creating amazing presentations!"
+            return "You've used all your free credits.\nUpgrade to keep creating!"
         } else if outlineRemaining == 1 {
-            return "You have 1 free outline left. Make it count!"
+            return "You have 1 free outline left.\nMake it count!"
         } else {
-            return "You have \(outlineRemaining) free outlines to create presentations."
+            return "You have \(outlineRemaining) free outlines\nto create presentations."
         }
     }
 
@@ -93,13 +93,14 @@ struct CreditInfoSheet: View {
                 .font(.system(size: 15))
                 .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 24)
 
             // Outline Credits Card
             creditCard(
                 icon: "wand.and.stars",
-                title: "AI Outlines",
+                title: "Outlines",
                 used: outlineUsageCount,
                 total: outlineLimit,
                 remaining: outlineRemaining,
