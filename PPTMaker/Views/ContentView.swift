@@ -132,9 +132,7 @@ struct ContentView: View {
                 CreditInfoSheet(
                     showPaywall: $showLimitBadgePaywall,
                     outlineUsageCount: outlineUsageCount,
-                    outlineLimit: settings.outlineLimit,
-                    presentationUsageCount: presentationUsageCount,
-                    presentationLimit: settings.presentationLimit
+                    outlineLimit: settings.outlineLimit
                 )
             }
             .fullScreenCover(isPresented: $showOnboarding, onDismiss: {

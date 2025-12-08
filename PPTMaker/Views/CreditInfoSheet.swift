@@ -14,8 +14,6 @@ struct CreditInfoSheet: View {
 
     let outlineUsageCount: Int
     let outlineLimit: Int
-    let presentationUsageCount: Int
-    let presentationLimit: Int
 
     private var isDarkMode: Bool {
         colorScheme == .dark
@@ -41,8 +39,14 @@ struct CreditInfoSheet: View {
         max(0, outlineLimit - outlineUsageCount)
     }
 
-    private var presentationRemaining: Int {
-        max(0, presentationLimit - presentationUsageCount)
+    private var friendlyMessage: String {
+        if outlineRemaining == 0 {
+            return "You've used all your free credits. Upgrade to keep creating amazing presentations!"
+        } else if outlineRemaining == 1 {
+            return "You have 1 free outline left. Make it count!"
+        } else {
+            return "You have \(outlineRemaining) free outlines to create presentations."
+        }
     }
 
     var body: some View {
@@ -84,36 +88,23 @@ struct CreditInfoSheet: View {
                 .foregroundColor(textColor)
                 .padding(.bottom, 8)
 
-            // Subtitle
-            Text("You're using the free version of PPT Maker")
+            // Friendly message
+            Text(friendlyMessage)
                 .font(.system(size: 15))
                 .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 24)
 
-            // Credit Cards
-            VStack(spacing: 12) {
-                // Outline Credits Card
-                creditCard(
-                    icon: "wand.and.stars",
-                    title: "AI Outlines",
-                    used: outlineUsageCount,
-                    total: outlineLimit,
-                    remaining: outlineRemaining,
-                    color: Color.brandPrimary
-                )
-
-                // Presentation Credits Card
-                creditCard(
-                    icon: "doc.richtext.fill",
-                    title: "Presentations",
-                    used: presentationUsageCount,
-                    total: presentationLimit,
-                    remaining: presentationRemaining,
-                    color: Color(red: 16/255, green: 185/255, blue: 129/255)
-                )
-            }
+            // Outline Credits Card
+            creditCard(
+                icon: "wand.and.stars",
+                title: "AI Outlines",
+                used: outlineUsageCount,
+                total: outlineLimit,
+                remaining: outlineRemaining,
+                color: Color.brandPrimary
+            )
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
 
@@ -122,7 +113,7 @@ struct CreditInfoSheet: View {
                 HapticManager.shared.mediumTap()
                 Analytics.shared.trackUnlockUnlimitedTapped(
                     outlineCreditsUsed: outlineUsageCount,
-                    presentationCreditsUsed: presentationUsageCount
+                    presentationCreditsUsed: 0
                 )
                 dismiss()
                 // Small delay to let sheet dismiss before showing paywall
@@ -164,14 +155,14 @@ struct CreditInfoSheet: View {
             .padding(.bottom, 24)
         }
         .background(backgroundColor)
-        .presentationDetents([.height(480)])
+        .presentationDetents([.height(420)])
         .presentationDragIndicator(.hidden)
         .onAppear {
             Analytics.shared.trackCreditInfoSheetShown(
                 outlineCreditsUsed: outlineUsageCount,
                 outlineCreditsLimit: outlineLimit,
-                presentationCreditsUsed: presentationUsageCount,
-                presentationCreditsLimit: presentationLimit
+                presentationCreditsUsed: 0,
+                presentationCreditsLimit: 0
             )
         }
     }
@@ -227,9 +218,7 @@ struct CreditInfoSheet_Previews: PreviewProvider {
         CreditInfoSheet(
             showPaywall: .constant(false),
             outlineUsageCount: 1,
-            outlineLimit: 2,
-            presentationUsageCount: 5,
-            presentationLimit: 10
+            outlineLimit: 2
         )
     }
 }
