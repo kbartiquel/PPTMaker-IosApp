@@ -31,14 +31,14 @@ class ReviewManager {
         }
     }
 
-    /// Track presentation generation and request review after 4 presentations
+    /// Track presentation generation and request review after 2 presentations
     func trackPresentationGenerated() {
         var count = UserDefaults.standard.integer(forKey: presentationCountKey)
         count += 1
         UserDefaults.standard.set(count, forKey: presentationCountKey)
 
-        // Request review after 4 presentations
-        if count == 4 {
+        // Request review after 2 presentations
+        if count == 2 {
             requestReviewAfterMilestone()
         }
     }
