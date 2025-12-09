@@ -137,7 +137,6 @@ struct CustomPaywallView: View {
             VStack(spacing: 16) {
                 // Plan Options
                 let settings = PaywallSettingsService.shared.getSettings()
-                let hideTrial = settings.paywallHideTrial
                 let showYearly = settings.paywallYearly
 
                 // Show Yearly Plan if setting enabled, otherwise show Lifetime
@@ -173,14 +172,12 @@ struct CustomPaywallView: View {
 
                 // Monthly Package (conditionally shown)
                 if let monthlyPackage = viewModel.monthlyPackage, settings.paywallMonthly {
-                    let hasMonthlyTrial = monthlyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
+                    let hasMonthlyTrial = monthlyPackage.storeProduct.introductoryDiscount != nil
                     planOption(
                         title: hasMonthlyTrial ? "3-Day Free Trial" : "Monthly Plan",
-                        subtitle: hasMonthlyTrial ? "Then \(monthlyPackage.storeProduct.localizedPriceString) per month" : (hideTrial ? "Billed monthly, cancel anytime" : nil),
-                        price: monthlyPackage.storeProduct.localizedPriceString,
-                        badge: hasMonthlyTrial ? "FREE" : nil,
+                        subtitle: hasMonthlyTrial ? "Then \(monthlyPackage.storeProduct.localizedPriceString) per month" : "Billed monthly, cancel anytime",
+                        price: hasMonthlyTrial ? "FREE" : monthlyPackage.storeProduct.localizedPriceString,
                         isSelected: viewModel.selectedPlan == "monthly",
-                        hideRightPrice: hasMonthlyTrial,
                         onTap: {
                             viewModel.selectedPlan = "monthly"
                             if hasMonthlyTrial {
@@ -192,14 +189,12 @@ struct CustomPaywallView: View {
 
                 // Weekly Package (conditionally shown)
                 if let weeklyPackage = viewModel.weeklyPackage, settings.paywallWeekly {
-                    let hasWeeklyTrial = weeklyPackage.storeProduct.introductoryDiscount != nil && !hideTrial
+                    let hasWeeklyTrial = weeklyPackage.storeProduct.introductoryDiscount != nil
                     planOption(
                         title: hasWeeklyTrial ? "3-Day Free Trial" : "Weekly Plan",
-                        subtitle: hasWeeklyTrial ? "Then \(weeklyPackage.storeProduct.localizedPriceString) per week" : (hideTrial ? "Billed weekly, cancel anytime" : nil),
-                        price: weeklyPackage.storeProduct.localizedPriceString,
-                        badge: hasWeeklyTrial ? "FREE" : nil,
+                        subtitle: hasWeeklyTrial ? "Then \(weeklyPackage.storeProduct.localizedPriceString) per week" : "Billed weekly, cancel anytime",
+                        price: hasWeeklyTrial ? "FREE" : weeklyPackage.storeProduct.localizedPriceString,
                         isSelected: viewModel.selectedPlan == "weekly",
-                        hideRightPrice: hasWeeklyTrial,
                         onTap: {
                             viewModel.selectedPlan = "weekly"
                             if hasWeeklyTrial {
@@ -209,8 +204,10 @@ struct CustomPaywallView: View {
                     )
                 }
 
-                // Free Trial Toggle (hidden when hideTrial setting is enabled)
-                if viewModel.hasAnyTrial && !hideTrial {
+                // Free Trial Toggle
+                // - Hidden if only one package is shown and it has no trial
+                // - Shown if there's at least one visible package with a trial
+                if viewModel.shouldShowTrialToggle {
                     Toggle(isOn: $viewModel.trialEnabled) {
                         Text("Free Trial Enabled")
                             .font(.system(size: 16, weight: .semibold))
@@ -299,11 +296,11 @@ struct CustomPaywallView: View {
         price: String,
         badge: String? = nil,
         isSelected: Bool,
-        showCheckmark: Bool = false,
-        hideRightPrice: Bool = false,
         onTap: @escaping () -> Void
     ) -> some View {
-        Button(action: onTap) {
+        let isFreePrice = price == "FREE"
+
+        return Button(action: onTap) {
             HStack(spacing: 12) {
                 // Left side: Title and subtitle
                 VStack(alignment: .leading, spacing: 2) {
@@ -315,22 +312,17 @@ struct CustomPaywallView: View {
                         Text(subtitle)
                             .font(.system(size: 13))
                             .foregroundColor(.gray)
-                    } else if !showCheckmark {
-                        Text(price)
-                            .font(.system(size: 14))
-                            .foregroundColor(.black)
                     }
                 }
 
                 Spacer()
 
-                // Right side: Price, Radio button
+                // Right side: Price and Radio button
                 HStack(spacing: 8) {
-                    // Show price on the right when there's a subtitle, unless hideRightPrice is true (for trial plans)
-                    if (subtitle != nil || showCheckmark) && !hideRightPrice {
+                    if subtitle != nil {
                         Text(price)
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(isFreePrice ? .green : .black)
                     }
 
                     ZStack {
@@ -398,21 +390,42 @@ class PaywallViewModel: ObservableObject {
     private var totalSeconds = 0
     private var rotationTimer: Timer?
 
-    var hasAnyTrial: Bool {
-        (monthlyPackage?.storeProduct.introductoryDiscount != nil) ||
-        (weeklyPackage?.storeProduct.introductoryDiscount != nil)
+    /// Returns true if at least one visible package has a trial
+    var hasVisibleTrial: Bool {
+        let settings = PaywallSettingsService.shared.getSettings()
+        let monthlyHasTrial = monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly
+        let weeklyHasTrial = weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly
+        return monthlyHasTrial || weeklyHasTrial
     }
 
-    var hasOnlyOneTrial: Bool {
+    /// Returns true if only one package (weekly or monthly) is shown
+    var isOnlyOneSubscriptionShown: Bool {
         let settings = PaywallSettingsService.shared.getSettings()
-        var count = 0
-        if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly {
-            count += 1
+        let monthlyShown = monthlyPackage != nil && settings.paywallMonthly
+        let weeklyShown = weeklyPackage != nil && settings.paywallWeekly
+        return (monthlyShown && !weeklyShown) || (!monthlyShown && weeklyShown)
+    }
+
+    /// Determines if the trial toggle should be shown
+    /// - Hide toggle if only one package is shown and it has no trial
+    /// - Show toggle if there's at least one visible package with a trial
+    var shouldShowTrialToggle: Bool {
+        let settings = PaywallSettingsService.shared.getSettings()
+
+        // If only one subscription package is shown
+        if isOnlyOneSubscriptionShown {
+            // Check if that single package has a trial
+            if settings.paywallMonthly && monthlyPackage != nil {
+                return monthlyPackage?.storeProduct.introductoryDiscount != nil
+            }
+            if settings.paywallWeekly && weeklyPackage != nil {
+                return weeklyPackage?.storeProduct.introductoryDiscount != nil
+            }
+            return false
         }
-        if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly {
-            count += 1
-        }
-        return count == 1
+
+        // Both packages shown - show toggle if at least one has a trial
+        return hasVisibleTrial
     }
 
     init() {
@@ -510,11 +523,18 @@ class PaywallViewModel: ObservableObject {
 
     func handleTrialToggle(enabled: Bool) {
         let settings = PaywallSettingsService.shared.getSettings()
+        let weeklyHasTrial = weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly
+        let monthlyHasTrial = monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly
+
         if enabled {
-            // Enable trial - select first available trial plan
-            if weeklyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallWeekly {
+            // Enable trial - prioritize weekly if it has trial, otherwise monthly
+            // This handles all cases:
+            // - Both have trials: select weekly (priority)
+            // - Only weekly has trial: select weekly
+            // - Only monthly has trial: select monthly
+            if weeklyHasTrial {
                 selectedPlan = "weekly"
-            } else if monthlyPackage?.storeProduct.introductoryDiscount != nil && settings.paywallMonthly {
+            } else if monthlyHasTrial {
                 selectedPlan = "monthly"
             }
         } else {
@@ -528,16 +548,11 @@ class PaywallViewModel: ObservableObject {
     }
 
     func getButtonText() -> String {
-        let settings = PaywallSettingsService.shared.getSettings()
-        let hideTrial = settings.paywallHideTrial
-
         if selectedPlan == "lifetime" {
             return "Get Lifetime Access"
         } else if selectedPlan == "yearly" {
             return "Get Yearly Access"
-        } else if !hideTrial && trialEnabled &&
-                  (monthlyPackage?.storeProduct.introductoryDiscount != nil ||
-                   weeklyPackage?.storeProduct.introductoryDiscount != nil) {
+        } else if trialEnabled && hasVisibleTrial {
             return "Try 3 Days Free"
         } else {
             return "Subscribe Now"

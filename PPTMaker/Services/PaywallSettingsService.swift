@@ -142,7 +142,7 @@ final class PaywallSettingsService {
             paywallCloseButtonDelay: 30,
             paywallCloseButtonDelayOnLimit: 35,
             showPaywallOnStart: true,
-            paywallMonthly: true,
+            paywallMonthly: false,
             paywallWeekly: true,
             paywallHideTrial: false,
             paywallYearly: false
