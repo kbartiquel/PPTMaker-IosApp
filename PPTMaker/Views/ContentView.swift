@@ -77,7 +77,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("PPT Maker")
+            .navigationTitle("EasySlides")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(isDarkMode ? .dark : .light, for: .navigationBar)
             .toolbarBackground(backgroundColor, for: .navigationBar)

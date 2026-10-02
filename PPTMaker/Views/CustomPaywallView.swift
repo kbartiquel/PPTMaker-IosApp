@@ -149,8 +149,7 @@ struct CustomPaywallView: View {
                             badge: "Best Value",
                             isSelected: viewModel.selectedPlan == "yearly",
                             onTap: {
-                                viewModel.selectedPlan = "yearly"
-                                viewModel.trialEnabled = false
+                                viewModel.selectPlan("yearly", hasTrial: false)
                             }
                         )
                     }
@@ -163,8 +162,7 @@ struct CustomPaywallView: View {
                             badge: "Best Value",
                             isSelected: viewModel.selectedPlan == "lifetime",
                             onTap: {
-                                viewModel.selectedPlan = "lifetime"
-                                viewModel.trialEnabled = false
+                                viewModel.selectPlan("lifetime", hasTrial: false)
                             }
                         )
                     }
@@ -179,10 +177,7 @@ struct CustomPaywallView: View {
                         price: hasMonthlyTrial ? "FREE" : monthlyPackage.storeProduct.localizedPriceString,
                         isSelected: viewModel.selectedPlan == "monthly",
                         onTap: {
-                            viewModel.selectedPlan = "monthly"
-                            if hasMonthlyTrial {
-                                viewModel.trialEnabled = true
-                            }
+                            viewModel.selectPlan("monthly", hasTrial: hasMonthlyTrial)
                         }
                     )
                 }
@@ -196,10 +191,7 @@ struct CustomPaywallView: View {
                         price: hasWeeklyTrial ? "FREE" : weeklyPackage.storeProduct.localizedPriceString,
                         isSelected: viewModel.selectedPlan == "weekly",
                         onTap: {
-                            viewModel.selectedPlan = "weekly"
-                            if hasWeeklyTrial {
-                                viewModel.trialEnabled = true
-                            }
+                            viewModel.selectPlan("weekly", hasTrial: hasWeeklyTrial)
                         }
                     )
                 }
@@ -218,7 +210,14 @@ struct CustomPaywallView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
                     .onChange(of: viewModel.trialEnabled) { newValue in
-                        viewModel.handleTrialToggle(enabled: newValue)
+                        // Only handle toggle changes from user interaction, not from plan selection
+                        if viewModel.isUpdatingFromPlanSelection {
+                     
+                            viewModel.isUpdatingFromPlanSelection = false
+                        } else {
+                            // User manually toggled, handle the change
+                            viewModel.handleTrialToggle(enabled: newValue)
+                        }
                     }
                 }
 
@@ -389,6 +388,7 @@ class PaywallViewModel: ObservableObject {
     private var secondsRemaining = 0
     private var totalSeconds = 0
     private var rotationTimer: Timer?
+    var isUpdatingFromPlanSelection = false // Flag to prevent recursive updates
 
     /// Returns true if at least one visible package has a trial
     var hasVisibleTrial: Bool {
@@ -519,6 +519,13 @@ class PaywallViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func selectPlan(_ plan: String, hasTrial: Bool) {
+        isUpdatingFromPlanSelection = true
+        selectedPlan = plan
+        trialEnabled = hasTrial
+        // Flag will be reset by onChange handler
     }
 
     func handleTrialToggle(enabled: Bool) {
